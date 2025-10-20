@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  crm-automation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: crm-automation:latest
+    container_name: crm-automation
+    env_file:
+      - .env
+    volumes:
+      - ./downloads_cf:/app/downloads_cf
+      - ./downloads_cip:/app/downloads_cip
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    command: ["--extract", "--generate"]
+    restart: "no"
+    shm_size: 2gb
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    driver: bridge

@@ -1,0 +1,30 @@
+{
+  "crm": {
+    "base_url": "crm.isimcrm.fr",
+    "username": "your_username@example.com",
+    "password": "your_password",
+    "http_auth_user": "crm_isim",
+    "http_auth_password": "your_http_auth_password"
+  },
+  "email": {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "smtp_username": "your_email@gmail.com",
+    "smtp_password": "your_app_password",
+    "recipients": [
+      "recipient1@example.com",
+      "recipient2@example.com"
+    ],
+    "sender_name": "CRM Automation"
+  },
+  "report": {
+    "title": "CRM Report - Specific Data",
+    "output_format": "pptx",
+    "include_timestamp": true
+  },
+  "execution": {
+    "headless": true,
+    "timeout": 30,
+    "retry_attempts": 3
+  }
+}

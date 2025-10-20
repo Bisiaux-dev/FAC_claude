@@ -1,0 +1,50 @@
+name: Envoi automatique rapport PERSPECTIVIA
+
+on:
+  schedule:
+    # Tous les jours à 8h00 heure de Paris (7h UTC en hiver)
+    - cron: '0 7 * * *'
+
+  # Permet un déclenchement manuel
+  workflow_dispatch:
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas openpyxl matplotlib python-pptx
+
+    - name: Generate data and checklists
+      run: |
+        echo "Génération des données et checklists..."
+        python t.py
+
+    - name: Send email report
+      env:
+        SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      run: |
+        echo "Envoi de l'email..."
+        python email_sender/send_report_safe.py
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: rapport-perspectivia-${{ github.run_number }}
+        path: |
+          Checklist/*.csv
+          Rapport_PERSPECTIVIA.pptx
+        retention-days: 7

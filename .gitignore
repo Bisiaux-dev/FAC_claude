@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Reports
+sent_reports/
+Rapport_*.pptx
+*_compressed.zip
+
+# Data
+Données transformé/*.csv
+Graphiques/*.png
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temp
+~$*.xlsx
+~$*.xls
