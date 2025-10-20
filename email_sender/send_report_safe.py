@@ -100,9 +100,9 @@ class CRMReportSender:
     def get_checklist_stats_fallback(self):
         """Compte directement les lignes (fallback)"""
         stats = {
-            'commercial_count': self.count_checklist_lines('checklist_équipe_commercial.csv'),
-            'admin_depot_count': self.count_checklist_lines('checklist_admin_dépôt_initial.csv'),
-            'admin_verif_count': self.count_checklist_lines('checklist_admin_vérifier_dépôt.csv'),
+            'commercial_count': self.count_checklist_lines('checklist_equipe_commercial.csv'),
+            'admin_depot_count': self.count_checklist_lines('checklist_admin_depot_initial.csv'),
+            'admin_verif_count': self.count_checklist_lines('checklist_admin_verifier_depot.csv'),
             'cindy_count': self.count_checklist_lines('checklist_cindy.csv'),
             'facturation_retard_count': self.count_checklist_lines('checklist_facturation_en_retard.csv'),
         }
@@ -261,9 +261,9 @@ class CRMReportSender:
             return True
 
         checklist_mapping = {
-            'checklist_équipe_commercial.csv': 'checklist_equipe_commercial.csv',
-            'checklist_admin_dépôt_initial.csv': 'checklist_admin_depot_initial.csv',
-            'checklist_admin_vérifier_dépôt.csv': 'checklist_admin_verifier_depot.csv',
+            'checklist_equipe_commercial.csv': 'checklist_equipe_commercial.csv',
+            'checklist_admin_depot_initial.csv': 'checklist_admin_depot_initial.csv',
+            'checklist_admin_verifier_depot.csv': 'checklist_admin_verifier_depot.csv',
             'checklist_cindy.csv': 'checklist_cindy.csv',
             'checklist_facturation_en_retard.csv': 'checklist_facturation_en_retard.csv',
             'checklist_recap.csv': 'checklist_recap.csv'
