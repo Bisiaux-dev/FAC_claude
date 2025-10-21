@@ -24,11 +24,20 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas openpyxl matplotlib python-pptx
+        pip install pandas openpyxl matplotlib python-pptx requests
+
+    - name: Download Excel file from SharePoint
+      env:
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      run: |
+        echo "📥 Téléchargement du fichier depuis SharePoint..."
+        python sharepoint_downloader/fetch_sharepoint_file.py
 
     - name: Generate data and checklists
       run: |
-        echo "Génération des données et checklists..."
+        echo "📊 Génération des données et checklists..."
         python t.py
 
     - name: Send email report
@@ -47,4 +56,5 @@ jobs:
         path: |
           Checklist/*.xlsx
           Rapport_PERSPECTIVIA.pptx
+          NOUVEAU FAC PERSPECTIVIA.xlsx
         retention-days: 7
