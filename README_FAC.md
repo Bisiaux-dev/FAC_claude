@@ -57,9 +57,6 @@ Sur GitHub :
 FAC/
 ├── .github/workflows/
 │   └── daily_report.yml           # GitHub Actions
-├── sharepoint_downloader/
-│   ├── fetch_sharepoint_file.py   # Téléchargement SharePoint
-│   └── __init__.py
 ├── email_sender/
 │   ├── send_report_safe.py        # Script d'envoi
 │   └── __init__.py
@@ -69,28 +66,25 @@ FAC/
 ├── Checklist/
 │   ├── checklist_*.xlsx           # Checklists générées
 │   └── checklist_recap.xlsx       # Récapitulatif
+├── download_robot.py              # Robot Selenium pour SharePoint
 ├── t.py                           # Génération données
 ├── requirements.txt               # Dépendances Python
-├── README_FAC.md                  # Documentation
-└── SETUP_AZURE_AD.md              # Configuration Azure AD
+└── README_FAC.md                  # Documentation
 ```
 
 ## ⚙️ Configuration
 
 ### Secrets GitHub
 
-**5 secrets configurés :**
+**4 secrets configurés :**
 
-**Pour SharePoint (Microsoft Graph API) :**
-- `AZURE_TENANT_ID` : ID du tenant Azure AD
-- `AZURE_CLIENT_ID` : ID de l'application Azure AD
-- `AZURE_CLIENT_SECRET` : Secret client Azure AD
+**Pour SharePoint (Selenium) :**
+- `SHAREPOINT_USERNAME` : b.hunalp@rhreflex.com
+- `SHAREPOINT_PASSWORD` : (mot de passe SharePoint)
 
 **Pour l'envoi d'email :**
 - `SMTP_USERNAME` : bisiauxpierre2@gmail.com
 - `SMTP_PASSWORD` : (mot de passe Gmail)
-
-📋 **Configuration détaillée** : Voir [SETUP_AZURE_AD.md](SETUP_AZURE_AD.md)
 
 ### Modifier l'heure d'envoi
 
@@ -108,7 +102,7 @@ pandas>=2.0.0
 openpyxl>=3.1.0
 matplotlib>=3.7.0
 python-pptx>=0.6.21
-requests>=2.31.0
+selenium>=4.15.0
 ```
 
 ## 📊 Monitoring
@@ -120,8 +114,8 @@ requests>=2.31.0
 ## 🔐 Sécurité
 
 - ✅ Secrets stockés dans GitHub Secrets (jamais en clair)
-- ✅ Authentification OAuth2 avec Azure AD
-- ✅ Permissions minimales (lecture seule SharePoint)
+- ✅ Authentification SharePoint avec Selenium
+- ✅ Mode headless en CI/CD (aucune interface graphique)
 - ✅ Variables d'environnement utilisées
 - ✅ Aucun mot de passe affiché dans les logs
 

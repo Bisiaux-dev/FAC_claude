@@ -24,16 +24,46 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas openpyxl matplotlib python-pptx requests
+        pip install pandas openpyxl matplotlib python-pptx selenium
+
+    - name: Install Chrome and ChromeDriver
+      run: |
+        # Install Chrome
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+        # Install ChromeDriver
+        CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
+        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROME_VERSION}.0.6723.69/linux64/chromedriver-linux64.zip"
+        unzip -q chromedriver-linux64.zip
+        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
+        chromedriver --version
 
     - name: Download Excel file from SharePoint
       env:
-        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        DISPLAY: :99
+        SHAREPOINT_USERNAME: ${{ secrets.SHAREPOINT_USERNAME }}
+        SHAREPOINT_PASSWORD: ${{ secrets.SHAREPOINT_PASSWORD }}
       run: |
-        echo "📥 Téléchargement du fichier depuis SharePoint..."
-        python sharepoint_downloader/fetch_sharepoint_file.py
+        echo "=========================================="
+        echo "  TÉLÉCHARGEMENT SHAREPOINT"
+        echo "=========================================="
+        # Démarrer Xvfb pour Chrome headless
+        sudo Xvfb -ac :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        sleep 2
+        # Exécuter le robot de téléchargement
+        python download_robot.py
+        # Vérifier le téléchargement
+        if [ -f "NOUVEAU FAC PERSPECTIVIA.xlsx" ]; then
+          echo "✅ Fichier téléchargé avec succès"
+          ls -lh "NOUVEAU FAC PERSPECTIVIA.xlsx"
+        else
+          echo "❌ ERREUR: Fichier non téléchargé"
+          exit 1
+        fi
 
     - name: Generate data and checklists
       run: |
