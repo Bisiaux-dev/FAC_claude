@@ -23,8 +23,9 @@ destination_directory = os.path.join(base_directory, 'Données transformé')
 os.makedirs(destination_directory, exist_ok=True)
 
 # Define files to convert with their sheet names
+# Use None to automatically use the first sheet
 files_to_convert = {
-    'NOUVEAU FAC PERSPECTIVIA.xlsx': '2025',
+    'NOUVEAU FAC PERSPECTIVIA.xlsx': None,  # Auto-detect first sheet
 }
 
 
@@ -65,7 +66,13 @@ def convert_xlsx_to_csv(files_dict, source_dir, dest_dir, encoding='utf_8_sig'):
 
         try:
             # Read Excel file
-            df = pd.read_excel(file_path, sheet_name=sheet)
+            if sheet is None:
+                # Auto-detect: read first sheet
+                xl = pd.ExcelFile(file_path, engine='openpyxl')
+                first_sheet = xl.sheet_names[0]
+                df = pd.read_excel(file_path, sheet_name=first_sheet, engine='openpyxl')
+            else:
+                df = pd.read_excel(file_path, sheet_name=sheet, engine='openpyxl')
 
             # Clean the data
             df_clean = cleanse_data(df)
