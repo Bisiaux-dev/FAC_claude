@@ -45,6 +45,6 @@ jobs:
       with:
         name: rapport-perspectivia-${{ github.run_number }}
         path: |
-          Checklist/*.csv
+          Checklist/*.xlsx
           Rapport_PERSPECTIVIA.pptx
         retention-days: 7

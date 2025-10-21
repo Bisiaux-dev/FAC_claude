@@ -44,17 +44,17 @@ class CRMReportSender:
 
     def get_checklist_stats_from_recap(self):
         """Récupère les statistiques depuis le fichier récapitulatif"""
-        recap_file = os.path.join(self.checklist_dir, 'checklist_recap.csv')
+        recap_file = os.path.join(self.checklist_dir, 'checklist_recap.xlsx')
 
         file_mapping = {
-            'checklist_équipe_commercial.csv': 'commercial_count',
-            'checklist_equipe_commercial.csv': 'commercial_count',
-            'checklist_admin_dépôt_initial.csv': 'admin_depot_count',
-            'checklist_admin_depot_initial.csv': 'admin_depot_count',
-            'checklist_admin_vérifier_dépôt.csv': 'admin_verif_count',
-            'checklist_admin_verifier_depot.csv': 'admin_verif_count',
-            'checklist_cindy.csv': 'cindy_count',
-            'checklist_facturation_en_retard.csv': 'facturation_retard_count',
+            'checklist_équipe_commercial.xlsx': 'commercial_count',
+            'checklist_equipe_commercial.xlsx': 'commercial_count',
+            'checklist_admin_dépôt_initial.xlsx': 'admin_depot_count',
+            'checklist_admin_depot_initial.xlsx': 'admin_depot_count',
+            'checklist_admin_vérifier_dépôt.xlsx': 'admin_verif_count',
+            'checklist_admin_verifier_depot.xlsx': 'admin_verif_count',
+            'checklist_cindy.xlsx': 'cindy_count',
+            'checklist_facturation_en_retard.xlsx': 'facturation_retard_count',
         }
 
         stats = {
@@ -66,21 +66,20 @@ class CRMReportSender:
         }
 
         try:
-            with open(recap_file, 'r', encoding='utf-8-sig') as f:
-                reader = csv.reader(f, delimiter=';')
-                next(reader)  # Skip header
+            import pandas as pd
+            df_recap = pd.read_excel(recap_file, engine='openpyxl')
 
-                for row in reader:
-                    if len(row) >= 2 and row[0] != 'TOTAL':
-                        filename = row[0].strip()
-                        try:
-                            count = int(row[1].strip())
-                            count = max(0, count - 1)  # -1 sur chaque comptage
-                            if filename in file_mapping:
-                                key = file_mapping[filename]
-                                stats[key] = max(stats[key], count)
-                        except (ValueError, IndexError):
-                            continue
+            for _, row in df_recap.iterrows():
+                if row['Fichier'] != 'TOTAL':
+                    filename = row['Fichier'].strip()
+                    try:
+                        count = int(row['Nombre de lignes'])
+                        count = max(0, count)  # Pas de -1, les données sont déjà correctes
+                        if filename in file_mapping:
+                            key = file_mapping[filename]
+                            stats[key] = max(stats[key], count)
+                    except (ValueError, KeyError):
+                        continue
 
             stats['total_count'] = sum(stats.values())
 
@@ -100,11 +99,11 @@ class CRMReportSender:
     def get_checklist_stats_fallback(self):
         """Compte directement les lignes (fallback)"""
         stats = {
-            'commercial_count': self.count_checklist_lines('checklist_equipe_commercial.csv'),
-            'admin_depot_count': self.count_checklist_lines('checklist_admin_depot_initial.csv'),
-            'admin_verif_count': self.count_checklist_lines('checklist_admin_verifier_depot.csv'),
-            'cindy_count': self.count_checklist_lines('checklist_cindy.csv'),
-            'facturation_retard_count': self.count_checklist_lines('checklist_facturation_en_retard.csv'),
+            'commercial_count': self.count_checklist_lines('checklist_equipe_commercial.xlsx'),
+            'admin_depot_count': self.count_checklist_lines('checklist_admin_depot_initial.xlsx'),
+            'admin_verif_count': self.count_checklist_lines('checklist_admin_verifier_depot.xlsx'),
+            'cindy_count': self.count_checklist_lines('checklist_cindy.xlsx'),
+            'facturation_retard_count': self.count_checklist_lines('checklist_facturation_en_retard.xlsx'),
         }
         stats['total_count'] = sum(stats.values())
         return stats
@@ -113,10 +112,9 @@ class CRMReportSender:
         """Compte le nombre de lignes dans un fichier checklist"""
         filepath = os.path.join(self.checklist_dir, filename)
         try:
-            with open(filepath, 'r', encoding='utf-8-sig') as f:
-                reader = csv.reader(f)
-                next(reader)  # Skip header
-                return max(0, sum(1 for row in reader if any(field.strip() for field in row if field)) - 1)
+            import pandas as pd
+            df = pd.read_excel(filepath, engine='openpyxl')
+            return len(df)
         except FileNotFoundError:
             return 0
         except Exception:
@@ -219,6 +217,9 @@ class CRMReportSender:
             if safe_filename.lower().endswith('.csv'):
                 maintype = 'text'
                 subtype = 'csv'
+            elif safe_filename.lower().endswith('.xlsx'):
+                maintype = 'application'
+                subtype = 'vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             elif safe_filename.lower().endswith('.pptx'):
                 maintype = 'application'
                 subtype = 'vnd.openxmlformats-officedocument.presentationml.presentation'
@@ -256,17 +257,17 @@ class CRMReportSender:
         return self.attach_file_safe(msg, self.report_path)
 
     def attach_checklists(self, msg):
-        """Attache les fichiers checklist CSV"""
+        """Attache les fichiers checklist Excel"""
         if not ATTACHMENT_CONFIG.get('attach_checklists', False):
             return True
 
         checklist_mapping = {
-            'checklist_equipe_commercial.csv': 'checklist_equipe_commercial.csv',
-            'checklist_admin_depot_initial.csv': 'checklist_admin_depot_initial.csv',
-            'checklist_admin_verifier_depot.csv': 'checklist_admin_verifier_depot.csv',
-            'checklist_cindy.csv': 'checklist_cindy.csv',
-            'checklist_facturation_en_retard.csv': 'checklist_facturation_en_retard.csv',
-            'checklist_recap.csv': 'checklist_recap.csv'
+            'checklist_equipe_commercial.xlsx': 'checklist_equipe_commercial.xlsx',
+            'checklist_admin_depot_initial.xlsx': 'checklist_admin_depot_initial.xlsx',
+            'checklist_admin_verifier_depot.xlsx': 'checklist_admin_verifier_depot.xlsx',
+            'checklist_cindy.xlsx': 'checklist_cindy.xlsx',
+            'checklist_facturation_en_retard.xlsx': 'checklist_facturation_en_retard.xlsx',
+            'checklist_recap.xlsx': 'checklist_recap.xlsx'
         }
 
         attached = 0

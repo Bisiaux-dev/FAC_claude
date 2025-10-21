@@ -14,8 +14,11 @@ Rapport_*.pptx
 *_compressed.zip
 
 # Data
-Données transformé/*.csv
+Données transformé/
 Graphiques/*.png
+Checklist/*.xlsx
+Checklist/*.csv
+NOUVEAU FAC PERSPECTIVIA.xlsx
 
 # IDE
 .vscode/

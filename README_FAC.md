@@ -24,8 +24,8 @@ Envoi automatique quotidien à **8h00** d'un email avec les statistiques des che
 ### Contenu de l'email
 
 - **Format HTML** avec titres en **gras** (COMMERCIAL, ADMINISTRATIF, COMPTABILITÉ)
-- **6 fichiers CSV** en pièces jointes
-- **Statistiques** dynamiques depuis `checklist_recap.csv`
+- **6 fichiers Excel (.xlsx)** en pièces jointes
+- **Statistiques** dynamiques depuis `checklist_recap.xlsx`
 
 ### Statistiques envoyées
 
@@ -70,8 +70,8 @@ FAC/
 │   ├── email_settings.py      # Configuration
 │   └── __init__.py
 ├── Checklist/
-│   ├── checklist_*.csv        # Checklists
-│   └── checklist_recap.csv    # Récapitulatif
+│   ├── checklist_*.xlsx       # Checklists
+│   └── checklist_recap.xlsx   # Récapitulatif
 ├── t.py                       # Génération données
 └── requirements.txt           # Dépendances Python
 ```

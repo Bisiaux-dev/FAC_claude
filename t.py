@@ -308,8 +308,8 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
                     if pec_accorde_val:
                         df_cindy = df[df[reel_col] == pec_accorde_val].copy()
                         if not df_cindy.empty:
-                            cindy_path = os.path.join(checklist_dir, 'checklist_cindy.csv')
-                            df_cindy.to_csv(cindy_path, index=False, encoding='utf_8_sig', sep=';')
+                            cindy_path = os.path.join(checklist_dir, 'checklist_cindy.xlsx')
+                            df_cindy.to_excel(cindy_path, index=False, engine='openpyxl')
                             print(f"   OK Checklist Cindy: {len(df_cindy)} formations")
 
                 # Checklist 2: Admin dépôt initial
@@ -325,8 +325,8 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
                     if depot_val:
                         df_depot_initial = df[df[pot_col] == depot_val].copy()
                         if not df_depot_initial.empty:
-                            depot_initial_path = os.path.join(checklist_dir, 'checklist_admin_depot_initial.csv')
-                            df_depot_initial.to_csv(depot_initial_path, index=False, encoding='utf_8_sig', sep=';')
+                            depot_initial_path = os.path.join(checklist_dir, 'checklist_admin_depot_initial.xlsx')
+                            df_depot_initial.to_excel(depot_initial_path, index=False, engine='openpyxl')
                             print(f"   OK Checklist Admin Depot Initial: {len(df_depot_initial)} formations")
 
                 # Checklist 3: Admin vérifier dépôt
@@ -342,16 +342,16 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
                     if brouillon_val:
                         df_verifier_depot = df[df[pot_col] == brouillon_val].copy()
                         if not df_verifier_depot.empty:
-                            verifier_depot_path = os.path.join(checklist_dir, 'checklist_admin_verifier_depot.csv')
-                            df_verifier_depot.to_csv(verifier_depot_path, index=False, encoding='utf_8_sig', sep=';')
+                            verifier_depot_path = os.path.join(checklist_dir, 'checklist_admin_verifier_depot.xlsx')
+                            df_verifier_depot.to_excel(verifier_depot_path, index=False, engine='openpyxl')
                             print(f"   OK Checklist Admin Verifier Depot: {len(df_verifier_depot)} formations")
 
                 # Checklist 4: Équipe commercial
                 if pot_col and pot_col in df.columns:
                     df_manque_signatures = df[df[pot_col] == 'Manque signatures'].copy()
                     if not df_manque_signatures.empty:
-                        manque_signatures_path = os.path.join(checklist_dir, 'checklist_equipe_commercial.csv')
-                        df_manque_signatures.to_csv(manque_signatures_path, index=False, encoding='utf_8_sig', sep=';')
+                        manque_signatures_path = os.path.join(checklist_dir, 'checklist_equipe_commercial.xlsx')
+                        df_manque_signatures.to_excel(manque_signatures_path, index=False, engine='openpyxl')
                         print(f"   OK Checklist Equipe Commercial: {len(df_manque_signatures)} formations")
 
                 # Checklist 5: Facturation en retard
@@ -366,8 +366,8 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
                     ].copy()
 
                     if not df_facturation_retard.empty:
-                        facturation_retard_path = os.path.join(checklist_dir, 'checklist_facturation_en_retard.csv')
-                        df_facturation_retard.to_csv(facturation_retard_path, index=False, encoding='utf_8_sig', sep=';')
+                        facturation_retard_path = os.path.join(checklist_dir, 'checklist_facturation_en_retard.xlsx')
+                        df_facturation_retard.to_excel(facturation_retard_path, index=False, engine='openpyxl')
                         print(f"   OK Checklist Facturation en Retard: {len(df_facturation_retard)} formations")
 
                 # =============================================================================
@@ -376,15 +376,15 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
 
                 print(f"\n[RECAP] Creating checklist recap...")
 
-                all_checklist_files = glob.glob(os.path.join(checklist_dir, '*.csv'))
-                checklist_files = [f for f in all_checklist_files if not f.endswith('checklist_recap.csv')]
+                all_checklist_files = glob.glob(os.path.join(checklist_dir, '*.xlsx'))
+                checklist_files = [f for f in all_checklist_files if not f.endswith('checklist_recap.xlsx')]
 
                 if checklist_files:
                     recap_data = []
 
                     for checklist_file in checklist_files:
                         try:
-                            df_checklist = pd.read_csv(checklist_file, encoding='utf_8_sig', sep=';')
+                            df_checklist = pd.read_excel(checklist_file, engine='openpyxl')
                             filename = os.path.basename(checklist_file)
                             row_count = len(df_checklist)
 
@@ -406,8 +406,8 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='�
                         })
                         df_recap = pd.concat([df_recap, total_row], ignore_index=True)
 
-                        recap_path = os.path.join(checklist_dir, 'checklist_recap.csv')
-                        df_recap.to_csv(recap_path, index=False, encoding='utf_8_sig', sep=';')
+                        recap_path = os.path.join(checklist_dir, 'checklist_recap.xlsx')
+                        df_recap.to_excel(recap_path, index=False, engine='openpyxl')
 
                         print(f"   OK Checklist recap created: {len(checklist_files)} checklists")
                         print(f"   OK Total formations: {df_recap['Nombre de lignes'].iloc[-1]}")
