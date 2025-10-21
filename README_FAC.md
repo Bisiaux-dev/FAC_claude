@@ -76,15 +76,17 @@ FAC/
 
 ### Secrets GitHub
 
-**4 secrets configurés :**
-
-**Pour SharePoint (Selenium) :**
-- `SHAREPOINT_USERNAME` : b.hunalp@rhreflex.com
-- `SHAREPOINT_PASSWORD` : (mot de passe SharePoint)
+**2 secrets configurés (obligatoires) :**
 
 **Pour l'envoi d'email :**
 - `SMTP_USERNAME` : bisiauxpierre2@gmail.com
 - `SMTP_PASSWORD` : (mot de passe Gmail)
+
+**Secrets optionnels (uniquement si le lien SharePoint nécessite une authentification) :**
+- `SHAREPOINT_USERNAME` : b.hunalp@rhreflex.com *(optionnel)*
+- `SHAREPOINT_PASSWORD` : (mot de passe SharePoint) *(optionnel)*
+
+💡 **Note** : Le lien de partage SharePoint est public, donc **aucune authentification n'est requise** pour le téléchargement. Les secrets SharePoint ne sont nécessaires que si le lien devient privé.
 
 ### Modifier l'heure d'envoi
 

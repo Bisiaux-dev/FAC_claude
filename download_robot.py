@@ -449,7 +449,7 @@ def main():
 
     # Configuration depuis les variables d'environnement
     username = os.getenv('SHAREPOINT_USERNAME', 'b.hunalp@rhreflex.com')
-    password = os.getenv('SHAREPOINT_PASSWORD')
+    password = os.getenv('SHAREPOINT_PASSWORD', '')  # Optionnel !
     sharepoint_url = os.getenv('SHAREPOINT_URL',
         'https://cfanice-my.sharepoint.com/:x:/g/personal/b_hunalp_rhreflex_com/EU3ys-Z0yutBt2ZsX2OtAIABRVINihppyXSB6hoDyH6WBw?e=gUu1iE')
 
@@ -457,12 +457,14 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     output_path = os.path.join(base_dir, "NOUVEAU FAC PERSPECTIVIA.xlsx")
 
-    if not password:
-        print("[ERREUR] Variable d'environnement SHAREPOINT_PASSWORD non definie")
-        print("[INFO] Definissez-la avec: export SHAREPOINT_PASSWORD='votre_mot_de_passe'")
-        return 1
+    # Les credentials sont optionnels si c'est un lien de partage public
+    if password:
+        print(f"[INFO] Mode: Authentification avec credentials")
+        print(f"[INFO] Username: {username}")
+    else:
+        print(f"[INFO] Mode: Lien de partage public (sans authentification)")
+        print(f"[INFO] Les credentials SharePoint ne sont pas requis")
 
-    print(f"[INFO] Username: {username}")
     print(f"[INFO] URL: {sharepoint_url}")
     print(f"[INFO] Output: {output_path}")
     print()

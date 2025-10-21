@@ -45,6 +45,7 @@ jobs:
     - name: Download Excel file from SharePoint
       env:
         DISPLAY: :99
+        # Secrets optionnels (uniquement si le lien SharePoint nécessite une authentification)
         SHAREPOINT_USERNAME: ${{ secrets.SHAREPOINT_USERNAME }}
         SHAREPOINT_PASSWORD: ${{ secrets.SHAREPOINT_PASSWORD }}
       run: |
@@ -54,7 +55,7 @@ jobs:
         # Démarrer Xvfb pour Chrome headless
         sudo Xvfb -ac :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
         sleep 2
-        # Exécuter le robot de téléchargement
+        # Exécuter le robot de téléchargement (fonctionne avec ou sans credentials)
         python download_robot.py
         # Vérifier le téléchargement
         if [ -f "NOUVEAU FAC PERSPECTIVIA.xlsx" ]; then
