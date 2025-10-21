@@ -383,7 +383,20 @@ def download_sharepoint_file(username, password, url, output_path):
                         print("[INFO] Conversion CSV -> Excel...")
                         try:
                             import pandas as pd
-                            df = pd.read_csv(str(latest_file), sep=';', encoding='utf-8-sig')
+                            # Essaie plusieurs encodages
+                            encodings = ['utf-8-sig', 'iso-8859-1', 'cp1252', 'latin1']
+                            df = None
+                            for encoding in encodings:
+                                try:
+                                    df = pd.read_csv(str(latest_file), sep=';', encoding=encoding)
+                                    print(f"[OK] CSV lu avec encodage: {encoding}")
+                                    break
+                                except (UnicodeDecodeError, UnicodeError):
+                                    continue
+
+                            if df is None:
+                                raise Exception("Impossible de decoder le CSV avec les encodages supportes")
+
                             df.to_excel(final_path, index=False, engine='openpyxl')
                             print(f"[OK] Fichier converti et sauvegarde: {os.path.basename(final_path)}")
                             # Supprime le CSV temporaire
