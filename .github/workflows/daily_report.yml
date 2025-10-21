@@ -34,12 +34,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
 
-        # Install ChromeDriver
-        CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
-        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROME_VERSION}.0.6723.69/linux64/chromedriver-linux64.zip"
-        unzip -q chromedriver-linux64.zip
-        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
-        sudo chmod +x /usr/local/bin/chromedriver
+        # Install ChromeDriver using chromedriver-autoinstaller
+        pip install chromedriver-autoinstaller
+        python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
+
+        # Verify installation
         chromedriver --version
 
     - name: Download Excel file from SharePoint
