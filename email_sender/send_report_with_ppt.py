@@ -24,9 +24,10 @@ import unicodedata
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # Override recipients for workflow 2 (with PowerPoint)
-# TEST: Temporairement avec 1 seul destinataire pour debug
 WORKFLOW_2_RECIPIENTS = [
-    'bisiaux.pierre@outlook.fr',
+    'b.hunalp@rhreflex.com',
+    'markovski@rhreflex.com',
+    'nicolas@perspectivia.fr',
 ]
 
 try:
