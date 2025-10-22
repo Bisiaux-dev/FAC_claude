@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+WORKFLOW 1: Envoi SANS PowerPoint aux 12 destinataires
 Module d'envoi automatique du rapport avec noms de fichiers sans accents
 Version sécurisée pour éviter les problèmes d'encodage
 """
@@ -361,9 +362,10 @@ class CRMReportSender:
 
     def send_report(self):
         """Fonction principale"""
-        print("=" * 60)
-        print("EMAIL PERSPECTIVIA - ENVOI AUTOMATIQUE (VERSION SAFE)")
-        print("=" * 60)
+        print("=" * 70)
+        print("WORKFLOW 1: EMAIL SANS POWERPOINT")
+        print("Destinataires: 12 personnes (tous)")
+        print("=" * 70)
 
         config_errors = validate_config()
         if config_errors:

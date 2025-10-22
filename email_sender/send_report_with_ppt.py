@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+WORKFLOW 2: Envoi AVEC PowerPoint aux 3 destinataires (Berfay, Markovski, Nicolas)
 Module d'envoi automatique du rapport avec noms de fichiers sans accents
 Version sécurisée pour éviter les problèmes d'encodage
 """
@@ -22,8 +23,19 @@ import unicodedata
 # Ajouter le dossier parent au path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# Override recipients for workflow 2 (with PowerPoint)
+WORKFLOW_2_RECIPIENTS = [
+    'b.hunalp@rhreflex.com',
+    'markovski@rhreflex.com',
+    'nicolas@perspectivia.fr',
+]
+
 try:
     from email_config.email_settings import *
+    # Override recipients
+    RECIPIENTS_CONFIG['to_emails'] = WORKFLOW_2_RECIPIENTS
+    # Enable PowerPoint attachment
+    ATTACHMENT_CONFIG['attach_report'] = True
 except ImportError:
     print("❌ ERREUR: Configuration email non trouvée")
     sys.exit(1)
@@ -361,9 +373,10 @@ class CRMReportSender:
 
     def send_report(self):
         """Fonction principale"""
-        print("=" * 60)
-        print("EMAIL PERSPECTIVIA - ENVOI AUTOMATIQUE (VERSION SAFE)")
-        print("=" * 60)
+        print("=" * 70)
+        print("WORKFLOW 2: EMAIL AVEC POWERPOINT")
+        print("Destinataires: 3 personnes (Berfay, Markovski, Nicolas)")
+        print("=" * 70)
 
         config_errors = validate_config()
         if config_errors:

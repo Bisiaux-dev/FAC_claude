@@ -48,25 +48,32 @@ MESSAGE_CONFIG = {
     'body_template_text': '''
 Bonjour,
 
-Voici le nombre de checklists identifiés par équipe :
+Voici le nombre de checklists identifié par équipe :
 
 COMMERCIAL
-({commercial_count}) nombre de ligne dans checklist_équipe_commercial
-=> {commercial_count} dossiers doivent être relancés par l'équipe commercial afin de récupérer les signatures manquantes
+checklist_équipe_commercial
+=> {commercial_count} dossiers doivent être relancés par l'équipe commercial afin de récupérer les signatures manquantes.
+Il manque une signature cerfa ou convention afin qu'on puisse déposer ces dossiers.
+
+dépôt_que_le_client_doit_effectuer
+=> {depot_client_count} dossiers doivent être relancés par l'équipe commercial afin que le client réalise le dépôt car ce sont des OPCO où nous n'avons pas la procuration pour réaliser le dépôt à leur place. Tout est prêt, il manque juste le client qui effectue son dépôt.
 
 ADMINISTRATIF
-({admin_depot_count}) nombre de ligne dans checklist_admin_dépôt_initial
+checklist_admin_dépôt_initial
 => {admin_depot_count} dossiers doivent être déposés en brouillon par l'équipe administrative
 
-({admin_verif_count}) nombre de ligne dans checklist_admin_vérifier_dépôt
+checklist_admin_vérifier_dépôt
 => {admin_verif_count} dossiers doivent être déposés par l'équipe administrative auprès de la plateforme de l'OPCO
 
 COMPTABILITÉ
-({cindy_count}) nombre de ligne dans checklist_cindy
+checklist_cindy
 => {cindy_count} dossiers doivent être facturés par la comptabilité
 
-({facturation_retard_count}) nombre de ligne dans checklist_facturation_en_retard
+checklist_facturation_en_retard
 => {facturation_retard_count} dossiers doivent être facturés par la comptabilité pour l'échéance 2
+
+tresorerie_en_retard
+=> {tresorerie_count} dossiers dont le contrat a débuté y'a 3 mois dont nous n'avons toujours pas été payé.
 
 TOTAL : {total_count} dossiers à traiter
 
@@ -80,29 +87,37 @@ Système d'automatisation PERSPECTIVIA
 <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">
     <p>Bonjour,</p>
 
-    <p>Voici le nombre de checklists identifiés par équipe :</p>
+    <p>Voici le nombre de checklists identifié par équipe :</p>
 
-    <p><strong style="font-size: 16px;">COMMERCIAL</strong><br>
-    ({commercial_count}) nombre de ligne dans checklist_équipe_commercial<br>
-    =&gt; {commercial_count} dossiers doivent être relancés par l'équipe commercial afin de récupérer les signatures manquantes</p>
+    <p><strong style="font-size: 16px; color: #2c5aa0;">COMMERCIAL</strong><br>
+    <strong>checklist_équipe_commercial</strong><br>
+    =&gt; <strong>{commercial_count} dossiers</strong> doivent être relancés par l'équipe commercial afin de récupérer les signatures manquantes.<br>
+    <em>Il manque une signature cerfa ou convention afin qu'on puisse déposer ces dossiers.</em></p>
 
-    <p><strong style="font-size: 16px;">ADMINISTRATIF</strong><br>
-    ({admin_depot_count}) nombre de ligne dans checklist_admin_dépôt_initial<br>
-    =&gt; {admin_depot_count} dossiers doivent être déposés en brouillon par l'équipe administrative</p>
+    <p><strong>dépôt_que_le_client_doit_effectuer</strong><br>
+    =&gt; <strong>{depot_client_count} dossiers</strong> doivent être relancés par l'équipe commercial afin que le client réalise le dépôt car ce sont des OPCO où nous n'avons pas la procuration pour réaliser le dépôt à leur place.<br>
+    <em>Tout est prêt, il manque juste le client qui effectue son dépôt.</em></p>
 
-    <p>({admin_verif_count}) nombre de ligne dans checklist_admin_vérifier_dépôt<br>
-    =&gt; {admin_verif_count} dossiers doivent être déposés par l'équipe administrative auprès de la plateforme de l'OPCO</p>
+    <p><strong style="font-size: 16px; color: #2c5aa0;">ADMINISTRATIF</strong><br>
+    <strong>checklist_admin_dépôt_initial</strong><br>
+    =&gt; <strong>{admin_depot_count} dossiers</strong> doivent être déposés en brouillon par l'équipe administrative</p>
 
-    <p><strong style="font-size: 16px;">COMPTABILITÉ</strong><br>
-    ({cindy_count}) nombre de ligne dans checklist_cindy<br>
-    =&gt; {cindy_count} dossiers doivent être facturés par la comptabilité</p>
+    <p><strong>checklist_admin_vérifier_dépôt</strong><br>
+    =&gt; <strong>{admin_verif_count} dossiers</strong> doivent être déposés par l'équipe administrative auprès de la plateforme de l'OPCO</p>
 
-    <p>({facturation_retard_count}) nombre de ligne dans checklist_facturation_en_retard<br>
-    =&gt; {facturation_retard_count} dossiers doivent être facturés par la comptabilité pour l'échéance 2</p>
+    <p><strong style="font-size: 16px; color: #2c5aa0;">COMPTABILITÉ</strong><br>
+    <strong>checklist_cindy</strong><br>
+    =&gt; <strong>{cindy_count} dossiers</strong> doivent être facturés par la comptabilité</p>
 
-    <p><strong>TOTAL : {total_count} dossiers à traiter</strong></p>
+    <p><strong>checklist_facturation_en_retard</strong><br>
+    =&gt; <strong>{facturation_retard_count} dossiers</strong> doivent être facturés par la comptabilité pour l'échéance 2</p>
 
-    <p>Date de génération : {generation_date}</p>
+    <p><strong>tresorerie_en_retard</strong><br>
+    =&gt; <strong>{tresorerie_count} dossiers</strong> dont le contrat a débuté y'a 3 mois dont nous n'avons toujours pas été payé.</p>
+
+    <p style="font-size: 16px;"><strong>TOTAL : {total_count} dossiers à traiter</strong></p>
+
+    <p><em>Date de génération : {generation_date}</em></p>
 
     <p>Cordialement,<br>
     Système d'automatisation PERSPECTIVIA</p>
