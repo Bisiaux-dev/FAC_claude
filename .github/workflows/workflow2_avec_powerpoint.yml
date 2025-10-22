@@ -68,6 +68,20 @@ jobs:
         echo "Vérification des fichiers générés:"
         ls -lh Checklist/*.xlsx
 
+    - name: Generate PowerPoint presentation
+      run: |
+        echo "=========================================="
+        echo "  GÉNÉRATION DU POWERPOINT"
+        echo "=========================================="
+        python generate_powerpoint.py
+        if [ -f "Rapport_PERSPECTIVIA.pptx" ]; then
+          echo "✅ PowerPoint généré avec succès"
+          ls -lh Rapport_PERSPECTIVIA.pptx
+        else
+          echo "❌ ERREUR: PowerPoint non généré"
+          exit 1
+        fi
+
     - name: Send email WITH PowerPoint (3 recipients - Berfay, Markovski, Nicolas)
       env:
         SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
