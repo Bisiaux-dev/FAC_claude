@@ -30,7 +30,7 @@ WORKFLOWS = {
         ],
     },
     '2': {
-        'name': 'WORKFLOW 2: AVEC PowerPoint',
+        'name': 'WORKFLOW 2: AVEC PowerPoint UNIQUEMENT',
         'script': 'email_sender/send_report_with_ppt.py',
         'recipients': [
             'b.hunalp@rhreflex.com',
@@ -38,7 +38,6 @@ WORKFLOWS = {
             'nicolas@perspectivia.fr',
         ],
         'attachments': [
-            '8 fichiers Excel (checklists)',
             '1 fichier PowerPoint (Rapport_PERSPECTIVIA.pptx)',
         ],
     }

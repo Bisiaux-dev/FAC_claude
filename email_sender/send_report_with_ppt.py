@@ -34,8 +34,9 @@ try:
     from email_config.email_settings import *
     # Override recipients
     RECIPIENTS_CONFIG['to_emails'] = WORKFLOW_2_RECIPIENTS
-    # Enable PowerPoint attachment
+    # Enable PowerPoint attachment, DISABLE Excel checklists
     ATTACHMENT_CONFIG['attach_report'] = True
+    ATTACHMENT_CONFIG['attach_checklists'] = False
 except ImportError:
     print("❌ ERREUR: Configuration email non trouvée")
     sys.exit(1)
@@ -163,7 +164,7 @@ class CRMReportSender:
         return True
 
     def create_message(self):
-        """Crée le message email"""
+        """Crée le message email pour Workflow 2 (PowerPoint uniquement)"""
         msg = MIMEMultipart()
 
         msg['From'] = formataddr((SENDER_CONFIG['from_name'], SENDER_CONFIG['from_email']))
@@ -175,63 +176,102 @@ class CRMReportSender:
         if SENDER_CONFIG['reply_to']:
             msg['Reply-To'] = SENDER_CONFIG['reply_to']
 
-        subject = MESSAGE_CONFIG['subject'].format(
-            date=datetime.now().strftime('%Y-%m-%d')
-        )
+        # Subject spécifique pour le workflow 2
+        subject = f"Rapport PERSPECTIVIA - Présentation Management ({datetime.now().strftime('%Y-%m-%d')})"
         msg['Subject'] = subject
 
         generation_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
         stats = self.get_checklist_stats()
 
-        use_html = MESSAGE_CONFIG.get('use_html', False)
+        # Template email simplifié pour workflow 2
+        body_text = f'''Bonjour,
 
-        if use_html:
-            msg_alternative = MIMEMultipart('alternative')
+Veuillez trouver ci-joint le rapport de présentation PERSPECTIVIA.
 
-            body_text = MESSAGE_CONFIG['body_template_text'].format(
-                commercial_count=stats['commercial_count'],
-                depot_client_count=stats['depot_client_count'],
-                admin_depot_count=stats['admin_depot_count'],
-                admin_verif_count=stats['admin_verif_count'],
-                cindy_count=stats['cindy_count'],
-                facturation_retard_count=stats['facturation_retard_count'],
-                tresorerie_count=stats['tresorerie_count'],
-                total_count=stats['total_count'],
-                generation_date=generation_date
-            )
-            body_text += MESSAGE_CONFIG['signature_text']
+RÉSUMÉ DES CHECKLISTS:
+- Commercial: {stats['commercial_count']} dossiers
+- Dépôt client: {stats['depot_client_count']} dossiers
+- Admin dépôt initial: {stats['admin_depot_count']} dossiers
+- Admin vérification: {stats['admin_verif_count']} dossiers
+- Cindy (facturation): {stats['cindy_count']} dossiers
+- Facturation en retard: {stats['facturation_retard_count']} dossiers
+- Trésorerie en retard: {stats['tresorerie_count']} dossiers
 
-            body_html = MESSAGE_CONFIG['body_template_html'].format(
-                commercial_count=stats['commercial_count'],
-                depot_client_count=stats['depot_client_count'],
-                admin_depot_count=stats['admin_depot_count'],
-                admin_verif_count=stats['admin_verif_count'],
-                cindy_count=stats['cindy_count'],
-                facturation_retard_count=stats['facturation_retard_count'],
-                tresorerie_count=stats['tresorerie_count'],
-                total_count=stats['total_count'],
-                generation_date=generation_date
-            )
-            body_html = body_html.replace('</body>', MESSAGE_CONFIG['signature_html'] + '</body>')
+TOTAL: {stats['total_count']} dossiers à traiter
 
-            msg_alternative.attach(MIMEText(body_text, 'plain', 'utf-8'))
-            msg_alternative.attach(MIMEText(body_html, 'html', 'utf-8'))
+Le détail complet est disponible dans la présentation PowerPoint ci-jointe.
 
-            msg.attach(msg_alternative)
-        else:
-            body = MESSAGE_CONFIG.get('body_template', MESSAGE_CONFIG['body_template_text']).format(
-                commercial_count=stats['commercial_count'],
-                depot_client_count=stats['depot_client_count'],
-                admin_depot_count=stats['admin_depot_count'],
-                admin_verif_count=stats['admin_verif_count'],
-                cindy_count=stats['cindy_count'],
-                facturation_retard_count=stats['facturation_retard_count'],
-                tresorerie_count=stats['tresorerie_count'],
-                total_count=stats['total_count'],
-                generation_date=generation_date
-            )
-            body += MESSAGE_CONFIG.get('signature', MESSAGE_CONFIG['signature_text'])
-            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+Date de génération: {generation_date}
+
+Cordialement,
+Système d'automatisation PERSPECTIVIA
+
+---
+Ce rapport a été généré automatiquement par FAC Automation
+Pour toute question technique, contactez bisiaux.pierre@outlook.fr
+'''
+
+        body_html = f'''<html>
+<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">
+    <p>Bonjour,</p>
+
+    <p>Veuillez trouver ci-joint le <strong>rapport de présentation PERSPECTIVIA</strong>.</p>
+
+    <h3 style="color: #2c5aa0;">RÉSUMÉ DES CHECKLISTS</h3>
+    <table style="border-collapse: collapse; width: 100%;">
+        <tr style="background-color: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Commercial</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['commercial_count']} dossiers</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Dépôt client</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['depot_client_count']} dossiers</td>
+        </tr>
+        <tr style="background-color: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Admin dépôt initial</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['admin_depot_count']} dossiers</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Admin vérification</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['admin_verif_count']} dossiers</td>
+        </tr>
+        <tr style="background-color: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Cindy (facturation)</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['cindy_count']} dossiers</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Facturation en retard</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['facturation_retard_count']} dossiers</td>
+        </tr>
+        <tr style="background-color: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Trésorerie en retard</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{stats['tresorerie_count']} dossiers</td>
+        </tr>
+        <tr style="background-color: #e8f4f8; font-weight: bold;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>TOTAL</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>{stats['total_count']} dossiers</strong></td>
+        </tr>
+    </table>
+
+    <p style="margin-top: 20px;">Le détail complet est disponible dans la <strong>présentation PowerPoint ci-jointe</strong>.</p>
+
+    <p><em>Date de génération: {generation_date}</em></p>
+
+    <p>Cordialement,<br>
+    Système d'automatisation PERSPECTIVIA</p>
+
+    <hr style="border: 1px solid #ccc; margin: 20px 0;">
+    <p style="font-size: 12px; color: #666;">
+    Ce rapport a été généré automatiquement par FAC Automation<br>
+    Pour toute question technique, contactez <a href="mailto:bisiaux.pierre@outlook.fr">bisiaux.pierre@outlook.fr</a>
+    </p>
+</body>
+</html>'''
+
+        msg_alternative = MIMEMultipart('alternative')
+        msg_alternative.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg_alternative.attach(MIMEText(body_html, 'html', 'utf-8'))
+        msg.attach(msg_alternative)
 
         return msg
 
@@ -374,8 +414,9 @@ class CRMReportSender:
     def send_report(self):
         """Fonction principale"""
         print("=" * 70)
-        print("WORKFLOW 2: EMAIL AVEC POWERPOINT")
+        print("WORKFLOW 2: EMAIL AVEC POWERPOINT UNIQUEMENT")
         print("Destinataires: 3 personnes (Berfay, Markovski, Nicolas)")
+        print("Pièce jointe: 1 fichier PowerPoint")
         print("=" * 70)
 
         config_errors = validate_config()
@@ -391,11 +432,15 @@ class CRMReportSender:
         print("EMAIL: Création du message email...")
         msg = self.create_message()
 
+        print("INFO: Attachment PowerPoint uniquement (checklists Excel désactivés)")
         if not self.attach_report(msg):
             print("WARNING: Erreur rapport PowerPoint")
+        else:
+            print("  OK: Rapport_PERSPECTIVIA.pptx")
 
-        if not self.attach_checklists(msg):
-            print("WARNING: Erreur checklists")
+        # Checklists sont désactivés dans ce workflow
+        # if not self.attach_checklists(msg):
+        #     print("WARNING: Erreur checklists")
 
         success = self.send_email(msg)
 
