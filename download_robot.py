@@ -263,6 +263,39 @@ def download_sharepoint_file(username, password, url, output_path):
                 except:
                     pass
 
+            # DEBUG: Affiche tous les éléments du menu pour comprendre la structure
+            print("[DEBUG] === ANALYSE DU MENU FICHIER ===")
+            try:
+                # Cherche tous les éléments de menu
+                menu_items = driver.find_elements(By.XPATH, "//*[@role='menuitem']")
+                print(f"[DEBUG] {len(menu_items)} menuitem(s) trouve(s)")
+                for idx, item in enumerate(menu_items[:20]):  # Limite à 20 pour éviter trop d'output
+                    try:
+                        text = item.text.strip()
+                        tag = item.tag_name
+                        classes = item.get_attribute("class") or ""
+                        print(f"[DEBUG]   {idx}: <{tag}> text='{text}' class='{classes[:50]}'")
+                    except:
+                        pass
+
+                # Cherche aussi les spans qui pourraient contenir le texte
+                spans = driver.find_elements(By.TAG_NAME, "span")
+                print(f"[DEBUG] {len(spans)} span(s) dans la page")
+                menu_texts = []
+                for span in spans[:50]:  # Limite à 50
+                    try:
+                        text = span.text.strip()
+                        if text and len(text) > 2 and len(text) < 50:
+                            menu_texts.append(text)
+                    except:
+                        pass
+                if menu_texts:
+                    print(f"[DEBUG] Textes trouvés dans spans: {menu_texts[:20]}")
+
+            except Exception as e:
+                print(f"[DEBUG] Erreur lors de l'analyse: {e}")
+            print("[DEBUG] === FIN ANALYSE ===")
+
             # Étape 2 : Cliquer sur "Créer une copie"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
             time.sleep(3)
