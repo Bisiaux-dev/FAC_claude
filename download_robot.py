@@ -32,7 +32,6 @@ def download_sharepoint_file(url, output_path):
         "download.directory_upgrade": True,
         "safebrowsing.enabled": True
     }
-    chrome_options.add_experimental_option("prefs", prefs)
 
     # Mode headless si CI/CD
     if os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true':
@@ -41,6 +40,18 @@ def download_sharepoint_file(url, output_path):
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
+
+        # Options pour éviter la détection headless et permettre le téléchargement
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36')
+
+        # Préférences supplémentaires pour forcer le téléchargement
+        prefs["profile.default_content_setting_values.automatic_downloads"] = 1
+
+    # Appliquer les préférences Chrome (une seule fois)
+    chrome_options.add_experimental_option("prefs", prefs)
 
     driver = None
 
@@ -64,57 +75,121 @@ def download_sharepoint_file(url, output_path):
         # Clic sur "Fichier"
         print("[INFO] Clic sur 'Fichier'...")
         fichier_selectors = [
+            # Sélecteurs par ID et CSS
             (By.ID, "FileMenuFlyoutLauncher"),
             (By.CSS_SELECTOR, "#FileMenuFlyoutLauncher > span"),
+            # Sélecteurs XPath
+            (By.XPATH, "//*[@id='FileMenuFlyoutLauncher']/span"),
+            (By.XPATH, "/html/body/div[4]/form/div[2]/div[1]/div[1]/div[3]/div/div[3]/div/div/div[1]/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div/div/div[1]/div/div/button/span"),
+            # Sélecteurs par texte (FR + EN)
+            (By.XPATH, "//span[contains(@class, 'textContainer') and contains(text(), 'Fichier')]"),
+            (By.XPATH, "//span[contains(@class, 'textContainer') and contains(text(), 'File')]"),
+            (By.XPATH, "//button[contains(., 'Fichier')]//span"),
+            (By.XPATH, "//button[contains(., 'File')]//span"),
         ]
 
+        fichier_clicked = False
         for selector_type, selector_value in fichier_selectors:
             try:
-                fichier_button = WebDriverWait(driver, 10).until(
+                print(f"[DEBUG] Essai sélecteur Fichier: {selector_value}")
+                fichier_button = WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((selector_type, selector_value))
                 )
                 fichier_button.click()
+                print("[OK] Bouton 'Fichier' cliqué!")
+                fichier_clicked = True
                 break
-            except:
+            except Exception as e:
                 continue
+
+        if not fichier_clicked:
+            print("[ERREUR] Impossible de cliquer sur 'Fichier'")
+
         time.sleep(3)
 
         # Clic sur "Créer une copie"
         print("[INFO] Clic sur 'Créer une copie'...")
         copie_selectors = [
+            # Sélecteurs CSS spécifiques
+            (By.CSS_SELECTOR, "#menur67 > span.fui-MenuItem__content"),
+            (By.CSS_SELECTOR, "#menur67 > span.fui-MenuItem__content.r1ls86vo"),
+            # Sélecteurs XPath spécifiques
+            (By.XPATH, "//*[@id='menur67']/span[2]"),
+            (By.XPATH, "/html/body/div[23]/div/div/div/div/div[3]/div[2]/span[2]"),
+            # Sélecteurs par texte (FR + EN)
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and contains(text(), 'Créer une copie')]"),
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and contains(text(), 'Make a copy')]"),
             (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
             (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
+            (By.XPATH, "//div[contains(., 'Créer une copie')]//span"),
+            (By.XPATH, "//div[contains(., 'Make a copy')]//span"),
         ]
 
+        copie_clicked = False
         for selector_type, selector_value in copie_selectors:
             try:
-                copie_button = WebDriverWait(driver, 5).until(
+                print(f"[DEBUG] Essai sélecteur Créer une copie: {selector_value}")
+                copie_button = WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((selector_type, selector_value))
                 )
                 copie_button.click()
+                print("[OK] Bouton 'Créer une copie' cliqué!")
+                copie_clicked = True
                 break
-            except:
+            except Exception as e:
                 continue
+
+        if not copie_clicked:
+            print("[ERREUR] Impossible de cliquer sur 'Créer une copie'")
+
         time.sleep(3)
 
         # Clic sur "Télécharger une copie"
         print("[INFO] Clic sur 'Télécharger une copie'...")
         download_selectors = [
+            # Sélecteurs par texte EXACT (FR + EN) - Les plus fiables
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Télécharger une copie']"),
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Download a copy']"),
+            (By.XPATH, "//span[text()='Télécharger une copie']"),
+            (By.XPATH, "//span[text()='Download a copy']"),
+            # Sélecteurs par texte CONTAINS (FR + EN)
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and contains(text(), 'Télécharger une copie')]"),
+            (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and contains(text(), 'Download a copy')]"),
             (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
             (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
+            # Sélecteurs XPath spécifiques (en dernier recours)
+            (By.XPATH, "//*[@id='MainApp']/div[24]/div/div/div/div/div/div[2]/span[2]"),
+            (By.XPATH, "/html/body/div[24]/div/div/div/div/div/div[2]/span[2]"),
+            # Sélecteurs CSS (éviter le trop générique)
+            (By.CSS_SELECTOR, "#MainApp > div:nth-child(53) > div > div > div > div > div > div:nth-child(2) > span.fui-MenuItem__content"),
         ]
 
+        download_clicked = False
         for selector_type, selector_value in download_selectors:
             try:
-                download_button = WebDriverWait(driver, 5).until(
+                print(f"[DEBUG] Essai sélecteur Télécharger une copie: {selector_value}")
+                download_button = WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((selector_type, selector_value))
                 )
                 download_button.click()
-                print("[OK] Téléchargement lancé!")
+                print("[OK] Bouton 'Télécharger une copie' cliqué!")
+                download_clicked = True
+
+                # Screenshot pour debug en CI/CD
+                if os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true':
+                    try:
+                        driver.save_screenshot('/tmp/sharepoint_download.png')
+                        print("[DEBUG] Screenshot sauvegardé: /tmp/sharepoint_download.png")
+                    except:
+                        pass
+
                 time.sleep(5)  # Attendre 5s pour que le téléchargement démarre
                 break
-            except:
+            except Exception as e:
                 continue
+
+        if not download_clicked:
+            print("[ERREUR] Impossible de cliquer sur 'Télécharger une copie'")
 
         # Attente du fichier
         print("[INFO] Attente du fichier...")
