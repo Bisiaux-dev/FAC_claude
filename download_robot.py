@@ -110,20 +110,25 @@ def download_sharepoint_file(url, output_path):
                     EC.element_to_be_clickable((selector_type, selector_value))
                 )
                 download_button.click()
+                print("[OK] Téléchargement lancé!")
+                time.sleep(5)  # Attendre 5s pour que le téléchargement démarre
                 break
             except:
                 continue
 
-        print("[OK] Téléchargement lancé!")
-
         # Attente du fichier
         print("[INFO] Attente du fichier...")
-        max_wait = 30
+        max_wait = 90  # Augmenté à 90 secondes pour GitHub Actions
         elapsed = 0
 
         while elapsed < max_wait:
             time.sleep(2)
             elapsed += 2
+
+            # Debug: lister tous les fichiers
+            all_files = list(Path(download_dir).glob("*"))
+            if elapsed % 10 == 0:  # Log toutes les 10 secondes
+                print(f"[DEBUG] {elapsed}s - Fichiers présents: {len(all_files)}")
 
             xlsx_files = list(Path(download_dir).glob("*.xlsx"))
             xlsx_files = [f for f in xlsx_files if not f.name.endswith('.crdownload')
