@@ -264,6 +264,11 @@ def download_sharepoint_file(username, password, url, output_path):
             fichier_button.click()
             print("[OK] Bouton 'Fichier' clique!")
 
+            # IMPORTANT: Le menu File s'ouvre HORS de l'iframe!
+            # Il faut sortir de l'iframe pour voir les éléments du menu
+            print("[DEBUG] Sortie de l'iframe pour accéder au menu File...")
+            driver.switch_to.default_content()
+
             # Attend que le menu se charge (plus long sur Linux)
             time.sleep(5 if is_ci else 3)
 
@@ -280,13 +285,13 @@ def download_sharepoint_file(username, password, url, output_path):
                         except:
                             pass
                     unique_texts = list(set(visible_texts))[:40]
-                    print(f"[DEBUG] Textes visibles après clic Fichier: {unique_texts}")
+                    print(f"[DEBUG] Textes visibles HORS iframe: {unique_texts}")
                 except Exception as e:
                     print(f"[DEBUG] Erreur listing textes: {e}")
 
             # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
-            time.sleep(3 if is_ci else 2)
+            time.sleep(2 if is_ci else 1)
 
             copie_button = None
             selectors_copie = [
