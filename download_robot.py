@@ -263,12 +263,7 @@ def download_sharepoint_file(username, password, url, output_path):
 
             # Étape 2 : Navigation vers "Créer une copie"
             print("[INFO] Etape 2/3 : Navigation clavier vers 'Créer une copie'...")
-            print("[INFO]   - Appui sur TAB (1/2)")
-            actions.send_keys(Keys.TAB)
-            actions.perform()
-            time.sleep(0.5)
-
-            print("[INFO]   - Appui sur TAB (2/2)")
+            print("[INFO]   - Appui sur TAB")
             actions.send_keys(Keys.TAB)
             actions.perform()
             time.sleep(0.5)
