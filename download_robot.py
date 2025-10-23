@@ -261,36 +261,85 @@ def download_sharepoint_file(username, password, url, output_path):
             if not fichier_button:
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
-            fichier_button.click()
-            print("[OK] Bouton 'Fichier' clique!")
+            # Utilise JavaScript pour simuler un vrai clic avec tous les événements
+            print("[LOG] Etape: Déclenchement du clic JavaScript sur bouton Fichier")
+            print("[LOG] Element trouvé:", fichier_button.get_attribute('id'))
 
-            # IMPORTANT: Le menu File s'ouvre HORS de l'iframe!
-            # Il faut sortir de l'iframe pour voir les éléments du menu
-            print("[DEBUG] Sortie de l'iframe pour accéder au menu File...")
+            driver.execute_script("""
+                var element = arguments[0];
+                console.log('[JS] Element à cliquer:', element);
+                var events = ['mousedown', 'mouseup', 'click'];
+                events.forEach(function(eventType) {
+                    var event = new MouseEvent(eventType, {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    element.dispatchEvent(event);
+                    console.log('[JS] Event dispatché:', eventType);
+                });
+            """, fichier_button)
+            print("[LOG] Clic JavaScript exécuté avec succès")
+
+            # Attend que le menu se charge
+            print("[LOG] Attente de 3 secondes pour chargement menu...")
+            time.sleep(3)
+            print("[LOG] Attente terminée")
+
+            # Cherche d'abord DANS l'iframe
+            print("[LOG] === Recherche dans IFRAME ===")
+            try:
+                all_spans_iframe = driver.find_elements(By.TAG_NAME, "span")
+                print(f"[LOG] Nombre de spans trouvés dans iframe: {len(all_spans_iframe)}")
+                iframe_texts = [s.text.strip() for s in all_spans_iframe[:100] if s.text.strip() and len(s.text.strip()) > 2]
+                unique_iframe = list(set(iframe_texts))[:30]
+                print(f"[LOG] Textes uniques dans iframe ({len(unique_iframe)}): {unique_iframe}")
+
+                # Cherche spécifiquement "Make" ou "copy"
+                make_copy_found = [t for t in iframe_texts if 'make' in t.lower() or 'copy' in t.lower() or 'copie' in t.lower()]
+                if make_copy_found:
+                    print(f"[LOG] *** TROUVÉ dans iframe: {make_copy_found}")
+            except Exception as e:
+                print(f"[LOG] Erreur recherche iframe: {e}")
+
+            # Ensuite cherche HORS de l'iframe
+            print("[LOG] === Sortie de l'iframe ===")
             driver.switch_to.default_content()
+            print("[LOG] Context changé vers page principale")
 
-            # Attend que le menu se charge (plus long sur Linux)
-            time.sleep(5 if is_ci else 3)
+            print("[LOG] Attente de 2 secondes...")
+            time.sleep(2)
+            print("[LOG] Attente terminée")
 
-            # DEBUG: Affiche tous les spans visibles pour comprendre ce qui apparaît
-            if is_ci:
-                try:
-                    all_spans = driver.find_elements(By.TAG_NAME, "span")
-                    visible_texts = []
-                    for span in all_spans[:200]:
-                        try:
-                            text = span.text.strip()
-                            if text and len(text) > 2 and len(text) < 50:
-                                visible_texts.append(text)
-                        except:
-                            pass
-                    unique_texts = list(set(visible_texts))[:40]
-                    print(f"[DEBUG] Textes visibles HORS iframe: {unique_texts}")
-                except Exception as e:
-                    print(f"[DEBUG] Erreur listing textes: {e}")
+            # Recherche HORS de l'iframe
+            print("[LOG] === Recherche dans PAGE PRINCIPALE ===")
+            try:
+                all_spans_main = driver.find_elements(By.TAG_NAME, "span")
+                print(f"[LOG] Nombre de spans trouvés hors iframe: {len(all_spans_main)}")
+
+                main_texts = []
+                for span in all_spans_main[:200]:
+                    try:
+                        text = span.text.strip()
+                        if text and len(text) > 2 and len(text) < 50:
+                            main_texts.append(text)
+                    except:
+                        pass
+
+                unique_main = list(set(main_texts))[:40]
+                print(f"[LOG] Textes uniques hors iframe ({len(unique_main)}): {unique_main}")
+
+                # Cherche spécifiquement "Make" ou "copy"
+                make_copy_main = [t for t in main_texts if 'make' in t.lower() or 'copy' in t.lower() or 'copie' in t.lower()]
+                if make_copy_main:
+                    print(f"[LOG] *** TROUVÉ hors iframe: {make_copy_main}")
+                else:
+                    print("[LOG] Aucun texte 'Make', 'copy' ou 'copie' trouvé")
+            except Exception as e:
+                print(f"[LOG] Erreur recherche main: {e}")
 
             # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
-            print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
+            print("[LOG] === ETAPE 2: Recherche 'Make a copy' ===")
             time.sleep(2 if is_ci else 1)
 
             copie_button = None
@@ -301,21 +350,25 @@ def download_sharepoint_file(username, password, url, output_path):
 
             # Augmente le timeout pour CI/CD (menu plus lent à apparaître)
             wait_timeout = 20 if is_ci else 5
+            print(f"[LOG] Timeout d'attente: {wait_timeout} secondes")
 
-            for selector_type, selector_value in selectors_copie:
+            for idx, (selector_type, selector_value) in enumerate(selectors_copie, 1):
+                print(f"[LOG] Tentative {idx}/{len(selectors_copie)}: {str(selector_value)[:60]}")
                 try:
-                    print(f"[DEBUG] Tentative Créer une copie: {str(selector_value)[:60]}")
                     # Attend juste la PRÉSENCE (pas clickable), puis on force le clic avec JS
+                    print(f"[LOG] Attente de l'élément (max {wait_timeout}s)...")
                     copie_button = WebDriverWait(driver, wait_timeout).until(
                         EC.presence_of_element_located((selector_type, selector_value))
                     )
-                    print(f"[OK] 'Créer une copie' trouve (présent dans DOM)")
+                    print(f"[LOG] *** SUCCÈS! Element trouvé avec sélecteur {idx}")
+                    print(f"[LOG] Texte de l'élément: {copie_button.text}")
                     break
                 except Exception as e:
-                    print(f"[DEBUG] Pas trouvé: {str(e)[:50]}")
+                    print(f"[LOG] Échec tentative {idx}: {str(e)[:80]}")
                     continue
 
             if not copie_button:
+                print("[LOG] *** ERREUR: Aucun sélecteur n'a fonctionné")
                 raise Exception("Impossible de trouver 'Créer une copie'")
 
             # Utilise JavaScript pour cliquer (plus fiable en headless)
