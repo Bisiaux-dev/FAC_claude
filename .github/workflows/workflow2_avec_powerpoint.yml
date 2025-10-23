@@ -34,23 +34,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
 
-        # Check Chrome version
+        # Check versions
         google-chrome --version
-
-        # Remove old ChromeDriver if exists
-        if [ -f "/usr/bin/chromedriver" ]; then
-          echo "Removing old ChromeDriver from /usr/bin/chromedriver"
-          sudo rm -f /usr/bin/chromedriver
-        fi
-
-        # Install matching ChromeDriver
-        python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
-
-        # Verify versions match
-        echo "Chrome version:"
-        google-chrome --version
-        echo "ChromeDriver version:"
-        chromedriver --version
+        chromedriver --version || echo "ChromeDriver not in PATH"
 
     - name: Download Excel file from SharePoint
       env:
