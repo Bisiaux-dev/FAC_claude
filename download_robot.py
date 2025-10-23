@@ -267,6 +267,23 @@ def download_sharepoint_file(username, password, url, output_path):
             # Attend que le menu se charge (plus long sur Linux)
             time.sleep(5 if is_ci else 3)
 
+            # DEBUG: Affiche tous les spans visibles pour comprendre ce qui apparaît
+            if is_ci:
+                try:
+                    all_spans = driver.find_elements(By.TAG_NAME, "span")
+                    visible_texts = []
+                    for span in all_spans[:200]:
+                        try:
+                            text = span.text.strip()
+                            if text and len(text) > 2 and len(text) < 50:
+                                visible_texts.append(text)
+                        except:
+                            pass
+                    unique_texts = list(set(visible_texts))[:40]
+                    print(f"[DEBUG] Textes visibles après clic Fichier: {unique_texts}")
+                except Exception as e:
+                    print(f"[DEBUG] Erreur listing textes: {e}")
+
             # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
             time.sleep(3 if is_ci else 2)
@@ -278,17 +295,19 @@ def download_sharepoint_file(username, password, url, output_path):
             ]
 
             # Augmente le timeout pour CI/CD (menu plus lent à apparaître)
-            wait_timeout = 15 if is_ci else 5
+            wait_timeout = 20 if is_ci else 5
 
             for selector_type, selector_value in selectors_copie:
                 try:
                     print(f"[DEBUG] Tentative Créer une copie: {str(selector_value)[:60]}")
+                    # Attend juste la PRÉSENCE (pas clickable), puis on force le clic avec JS
                     copie_button = WebDriverWait(driver, wait_timeout).until(
-                        EC.element_to_be_clickable((selector_type, selector_value))
+                        EC.presence_of_element_located((selector_type, selector_value))
                     )
-                    print(f"[OK] 'Créer une copie' trouve")
+                    print(f"[OK] 'Créer une copie' trouve (présent dans DOM)")
                     break
-                except:
+                except Exception as e:
+                    print(f"[DEBUG] Pas trouvé: {str(e)[:50]}")
                     continue
 
             if not copie_button:
