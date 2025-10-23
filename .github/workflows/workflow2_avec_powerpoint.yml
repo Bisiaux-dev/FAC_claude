@@ -34,8 +34,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
 
-        # Install ChromeDriver
+        # Check Chrome version
+        google-chrome --version
+
+        # Remove old ChromeDriver if exists
+        if [ -f "/usr/bin/chromedriver" ]; then
+          echo "Removing old ChromeDriver from /usr/bin/chromedriver"
+          sudo rm -f /usr/bin/chromedriver
+        fi
+
+        # Install matching ChromeDriver
         python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
+
+        # Verify versions match
+        echo "Chrome version:"
+        google-chrome --version
+        echo "ChromeDriver version:"
         chromedriver --version
 
     - name: Download Excel file from SharePoint
