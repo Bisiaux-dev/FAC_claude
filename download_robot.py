@@ -261,13 +261,12 @@ def download_sharepoint_file(username, password, url, output_path):
             if not fichier_button:
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
-            # Utilise JavaScript pour simuler un vrai clic avec tous les événements
+            # Utilise JavaScript pour simuler un vrai clic
             print("[LOG] Etape: Déclenchement du clic JavaScript sur bouton Fichier")
             print("[LOG] Element trouvé:", fichier_button.get_attribute('id'))
 
             driver.execute_script("""
                 var element = arguments[0];
-                console.log('[JS] Element à cliquer:', element);
                 var events = ['mousedown', 'mouseup', 'click'];
                 events.forEach(function(eventType) {
                     var event = new MouseEvent(eventType, {
@@ -276,10 +275,9 @@ def download_sharepoint_file(username, password, url, output_path):
                         cancelable: true
                     });
                     element.dispatchEvent(event);
-                    console.log('[JS] Event dispatché:', eventType);
                 });
             """, fichier_button)
-            print("[LOG] Clic JavaScript exécuté avec succès")
+            print("[LOG] Clic JavaScript exécuté")
 
             # Attend que le menu se charge
             print("[LOG] Attente de 3 secondes pour chargement menu...")
@@ -357,24 +355,24 @@ def download_sharepoint_file(username, password, url, output_path):
 
             actions = ActionChains(driver)
 
-            # Séquence: TAB (aller à "Make a copy") + ENTER + TAB (aller à "Download a copy") + ENTER
-            print("[LOG] Navigation: TAB + ENTER (Make a copy) + TAB + ENTER (Download a copy)")
+            # Essayons FLECHE BAS au lieu de TAB (menus utilisent souvent les flèches)
+            print("[LOG] Navigation: ARROW_DOWN + ENTER (Make a copy) + ARROW_DOWN + ENTER (Download)")
 
-            # 1er TAB + ENTER pour "Make a copy"
-            print("[LOG] Action 1: TAB")
-            actions.send_keys(Keys.TAB).perform()
+            # Flèche BAS pour aller à "Make a copy"
+            print("[LOG] Action 1: ARROW_DOWN")
+            actions.send_keys(Keys.ARROW_DOWN).perform()
             time.sleep(1)
 
-            print("[LOG] Action 2: ENTER (sélectionner Make a copy)")
+            print("[LOG] Action 2: ENTER (ouvrir Make a copy)")
             actions.send_keys(Keys.ENTER).perform()
             time.sleep(2)
 
-            # 2ème TAB + ENTER pour "Download a copy"
-            print("[LOG] Action 3: TAB")
-            actions.send_keys(Keys.TAB).perform()
+            # Flèche BAS pour aller à "Download a copy" dans le sous-menu
+            print("[LOG] Action 3: ARROW_DOWN")
+            actions.send_keys(Keys.ARROW_DOWN).perform()
             time.sleep(1)
 
-            print("[LOG] Action 4: ENTER (sélectionner Download a copy)")
+            print("[LOG] Action 4: ENTER (télécharger)")
             actions.send_keys(Keys.ENTER).perform()
             time.sleep(2)
 
