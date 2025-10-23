@@ -68,15 +68,11 @@ def download_sharepoint_file(username, password, url, output_path):
     # Détecte si on est dans un environnement CI/CD (GitHub Actions, etc.)
     is_ci = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
 
-    if is_ci:
-        # Mode headless obligatoire pour CI/CD
-        chrome_options.add_argument("--headless=new")  # Nouveau mode headless plus stable
-        print("[INFO] Mode CI/CD detecte - Mode headless active")
-    else:
-        # Mode graphique pour usage local (debugging plus facile)
-        print("[INFO] Mode local - Mode graphique active")
+    # TOUJOURS en mode headless pour simuler l'environnement GitHub Actions
+    chrome_options.add_argument("--headless=new")  # Nouveau mode headless plus stable
+    print("[INFO] Mode headless active (simulation GitHub Actions)")
 
-    # Options communes pour tous les environnements
+    # Options anti-détection pour contourner les protections SharePoint
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -85,15 +81,16 @@ def download_sharepoint_file(username, password, url, output_path):
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-infobars")
 
+    # Masque les indices que c'est un navigateur automatisé
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+
     # User agent pour éviter la détection de bot
     chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-    # Options spécifiques pour CI/CD
-    if is_ci:
-        chrome_options.add_argument("--disable-setuid-sandbox")
-        chrome_options.add_argument("--remote-debugging-port=9222")
-    else:
-        chrome_options.add_argument("--start-maximized")
+    # Options spécifiques pour headless
+    chrome_options.add_argument("--disable-setuid-sandbox")
+    chrome_options.add_argument("--remote-debugging-port=9222")
 
     driver = None
 
@@ -103,6 +100,16 @@ def download_sharepoint_file(username, password, url, output_path):
         # Essaie d'utiliser Chrome
         try:
             driver = webdriver.Chrome(options=chrome_options)
+
+            # Masque webdriver avec JavaScript
+            driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+                'source': '''
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                '''
+            })
+
             print("[OK] Chrome demarre")
         except Exception as e:
             print(f"[WARN] Impossible de demarrer Chrome: {e}")
@@ -217,7 +224,7 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[INFO] Continuation sans iframe...")
 
         # Téléchargement via : Fichier → Créer une copie → Télécharger une copie
-        print("[INFO] Navigation dans les menus : Fichier -> Créer une copie -> Télécharger une copie...")
+        print("[INFO] Navigation : Fichier -> Créer une copie -> Télécharger une copie...")
 
         download_clicked = False
 
@@ -255,130 +262,66 @@ def download_sharepoint_file(username, password, url, output_path):
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
             fichier_button.click()
-            time.sleep(5)  # Augmenté à 5s pour s'assurer que le menu charge complètement
-            print("[OK] Menu 'Fichier' cliqué, attente chargement...")
+            time.sleep(3)
+            print("[OK] Bouton 'Fichier' clique!")
 
-            # Capture d'écran pour debug (si en mode CI/CD)
-            if is_ci:
-                try:
-                    screenshot_path = os.path.join(download_dir, "debug_menu_fichier.png")
-                    driver.save_screenshot(screenshot_path)
-                    print(f"[DEBUG] Screenshot sauvegarde: {screenshot_path}")
-                except:
-                    pass
-
-            # DEBUG: Cherche dans toute la page (pas seulement iframe)
-            print("[DEBUG] Recherche de 'Make a copy' dans toute la page...")
-            try:
-                # Sortir de l'iframe temporairement pour chercher partout
-                driver.switch_to.default_content()
-                time.sleep(2)
-
-                all_spans = driver.find_elements(By.TAG_NAME, "span")
-                menu_texts = []
-                for span in all_spans[:150]:  # Augmenté à 150
-                    try:
-                        text = span.text.strip()
-                        if text and len(text) > 2 and len(text) < 100:
-                            menu_texts.append(text)
-                    except:
-                        pass
-                if menu_texts:
-                    unique_texts = list(set(menu_texts))[:50]  # Plus de textes
-                    print(f"[DEBUG] Textes dans page complète: {unique_texts}")
-
-                # Retourner dans l'iframe
-                iframes = driver.find_elements(By.TAG_NAME, "iframe")
-                for iframe in iframes:
-                    iframe_id = iframe.get_attribute("id")
-                    if "WacFrame" in str(iframe_id) or "Excel" in str(iframe_id):
-                        driver.switch_to.frame(iframe)
-                        print(f"[DEBUG] Retour dans iframe: {iframe_id}")
-                        break
-
-            except Exception as e:
-                print(f"[DEBUG] Erreur debug: {e}")
-
-            # Étape 2 : Cliquer sur "Créer une copie"
+            # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
             time.sleep(2)
 
             copie_button = None
-            # Sélecteurs pour "Créer une copie" / "Make a copy"
             selectors_copie = [
-                # Priorité 1 : Classe CSS stable fui-MenuItem__content (indépendante de la langue)
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and (text()='Make a copy' or text()='Créer une copie')]"),
-                # Priorité 2 : Texte exact (anglais d'abord pour CI/CD)
-                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Make a copy']"),
-                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Créer une copie']"),
-                # Priorité 3 : Texte partiel
                 (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
                 (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
-                # Priorité 4 : ID si disponible (peut être dynamique mais tentons)
-                (By.CSS_SELECTOR, "#menurjj > span.fui-MenuItem__content"),
-                # Priorité 5 : Fallback - n'importe quel menu item avec le texte
-                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Make a copy']"),
-                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Créer une copie']"),
             ]
 
             for selector_type, selector_value in selectors_copie:
                 try:
-                    print(f"[DEBUG] Tentative Créer une copie avec: {selector_type} - {str(selector_value)[:60]}")
+                    print(f"[DEBUG] Tentative Créer une copie: {str(selector_value)[:60]}")
                     copie_button = WebDriverWait(driver, 5).until(
                         EC.element_to_be_clickable((selector_type, selector_value))
                     )
-                    print(f"[OK] Bouton 'Créer une copie' trouve avec: {selector_type}")
+                    print(f"[OK] 'Créer une copie' trouve")
                     break
-                except Exception as e:
-                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                except:
                     continue
 
             if not copie_button:
                 raise Exception("Impossible de trouver 'Créer une copie'")
 
-            copie_button.click()
-            time.sleep(2)
-            print("[OK] Menu 'Créer une copie' ouvert")
+            # Utilise JavaScript pour cliquer (plus fiable en headless)
+            print("[DEBUG] Clic JavaScript sur 'Créer une copie'")
+            driver.execute_script("arguments[0].click();", copie_button)
+            time.sleep(3)
+            print("[OK] 'Créer une copie' clique")
 
             # Étape 3 : Cliquer sur "Télécharger une copie"
             print("[INFO] Etape 3/3 : Clic sur 'Télécharger une copie'...")
             time.sleep(2)
 
             download_button = None
-            # Sélecteurs pour "Télécharger une copie" / "Download a copy"
             selectors_download = [
-                # Priorité 1 : Classe CSS stable fui-MenuItem__content (indépendante de la langue)
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and (text()='Download a copy' or text()='Télécharger une copie')]"),
-                # Priorité 2 : Texte exact avec classe stable (anglais d'abord pour CI/CD)
-                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Download a copy']"),
-                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Télécharger une copie']"),
-                # Priorité 3 : Texte partiel
                 (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
                 (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
-                # Priorité 4 : Structure du menu avec rôle ARIA
-                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Download a copy']"),
-                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Télécharger une copie']"),
-                # Priorité 5 : Fallback - recherche dans tous les spans visibles
-                (By.XPATH, "//span[normalize-space()='Download a copy']"),
-                (By.XPATH, "//span[normalize-space()='Télécharger une copie']"),
             ]
 
             for selector_type, selector_value in selectors_download:
                 try:
-                    print(f"[DEBUG] Tentative Télécharger une copie avec: {selector_type} - {str(selector_value)[:60]}")
-                    download_button = WebDriverWait(driver, 5).until(
+                    print(f"[DEBUG] Tentative Télécharger: {str(selector_value)[:60]}")
+                    download_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((selector_type, selector_value))
                     )
-                    print(f"[OK] Bouton 'Télécharger une copie' trouve avec: {selector_type}")
+                    print(f"[OK] 'Télécharger une copie' trouve")
                     break
-                except Exception as e:
-                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                except:
                     continue
 
             if not download_button:
                 raise Exception("Impossible de trouver 'Télécharger une copie'")
 
-            download_button.click()
+            # Utilise JavaScript pour cliquer
+            print("[DEBUG] Clic JavaScript sur 'Télécharger une copie'")
+            driver.execute_script("arguments[0].click();", download_button)
             time.sleep(2)
             print("[OK] Telechargement XLSX lance!")
             download_clicked = True
@@ -388,12 +331,11 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[ERREUR] Le telechargement automatique a echoue")
             return False
 
-        # Si on arrive ici, le clic sur "Télécharger une copie" a réussi
-        # Attend que le téléchargement XLSX soit terminé
+        # Si on arrive ici, le téléchargement XLSX a été lancé
         print("[INFO] Attente de la fin du telechargement XLSX...")
 
         # Vérifie périodiquement si le fichier apparaît
-        max_wait = 30  # 30 secondes maximum
+        max_wait = 40  # 40 secondes maximum
         check_interval = 2  # Vérifie toutes les 2 secondes
         elapsed = 0
 
@@ -414,21 +356,18 @@ def download_sharepoint_file(username, password, url, output_path):
                 # Prend le fichier le plus récent
                 latest_file = max(xlsx_files, key=lambda f: f.stat().st_mtime)
 
-                # Vérifie qu'il a été modifié récemment (dans les 30 dernières secondes)
-                if time.time() - latest_file.stat().st_mtime < 30:
+                # Vérifie qu'il a été modifié récemment (dans les 40 dernières secondes)
+                if time.time() - latest_file.stat().st_mtime < 40:
                     print(f"[OK] Fichier XLSX detecte: {latest_file.name}")
 
-                    # Le fichier de sortie
-                    final_path = output_path
-
                     # Renomme si nécessaire
-                    if str(latest_file) != final_path:
+                    if str(latest_file) != output_path:
                         import shutil
-                        shutil.move(str(latest_file), final_path)
-                        print(f"[OK] Fichier renomme vers: {os.path.basename(final_path)}")
+                        shutil.move(str(latest_file), output_path)
+                        print(f"[OK] Fichier renomme vers: {os.path.basename(output_path)}")
 
                     # Vérifie la taille
-                    size_kb = Path(final_path).stat().st_size / 1024
+                    size_kb = Path(output_path).stat().st_size / 1024
                     print(f"[OK] Taille: {size_kb:.2f} KB")
 
                     return True
@@ -436,7 +375,7 @@ def download_sharepoint_file(username, password, url, output_path):
             if elapsed % 10 == 0:
                 print(f"  Attente... ({elapsed}/{max_wait}s)")
 
-        print("[ERREUR] Timeout atteint - fichier non telecharge")
+        print("[ERREUR] Timeout atteint - fichier XLSX non telecharge")
         return False
 
     except Exception as e:
