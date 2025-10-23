@@ -251,123 +251,45 @@ def download_sharepoint_file(username, password, url, output_path):
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
             fichier_button.click()
-            time.sleep(3)
+            time.sleep(2)
             print("[OK] Menu 'Fichier' ouvert")
 
-            # Capture d'écran pour debug (si en mode CI/CD)
-            if is_ci:
-                try:
-                    screenshot_path = os.path.join(download_dir, "debug_menu_fichier.png")
-                    driver.save_screenshot(screenshot_path)
-                    print(f"[DEBUG] Screenshot sauvegarde: {screenshot_path}")
-                except:
-                    pass
+            # Navigation au clavier : beaucoup plus fiable que les sélecteurs!
+            # Tab x2 → Enter → Tab x1 → Enter
+            from selenium.webdriver.common.keys import Keys
+            from selenium.webdriver.common.action_chains import ActionChains
 
-            # DEBUG: Affiche tous les éléments du menu pour comprendre la structure
-            print("[DEBUG] === ANALYSE DU MENU FICHIER ===")
-            try:
-                # Cherche tous les éléments de menu
-                menu_items = driver.find_elements(By.XPATH, "//*[@role='menuitem']")
-                print(f"[DEBUG] {len(menu_items)} menuitem(s) trouve(s)")
-                for idx, item in enumerate(menu_items[:20]):  # Limite à 20 pour éviter trop d'output
-                    try:
-                        text = item.text.strip()
-                        tag = item.tag_name
-                        classes = item.get_attribute("class") or ""
-                        print(f"[DEBUG]   {idx}: <{tag}> text='{text}' class='{classes[:50]}'")
-                    except:
-                        pass
+            actions = ActionChains(driver)
 
-                # Cherche aussi les spans qui pourraient contenir le texte
-                spans = driver.find_elements(By.TAG_NAME, "span")
-                print(f"[DEBUG] {len(spans)} span(s) dans la page")
-                menu_texts = []
-                for span in spans[:50]:  # Limite à 50
-                    try:
-                        text = span.text.strip()
-                        if text and len(text) > 2 and len(text) < 50:
-                            menu_texts.append(text)
-                    except:
-                        pass
-                if menu_texts:
-                    print(f"[DEBUG] Textes trouvés dans spans: {menu_texts[:20]}")
+            # Étape 2 : Navigation vers "Créer une copie"
+            print("[INFO] Etape 2/3 : Navigation clavier vers 'Créer une copie'...")
+            print("[INFO]   - Appui sur TAB (1/2)")
+            actions.send_keys(Keys.TAB)
+            actions.perform()
+            time.sleep(0.5)
 
-            except Exception as e:
-                print(f"[DEBUG] Erreur lors de l'analyse: {e}")
-            print("[DEBUG] === FIN ANALYSE ===")
+            print("[INFO]   - Appui sur TAB (2/2)")
+            actions.send_keys(Keys.TAB)
+            actions.perform()
+            time.sleep(0.5)
 
-            # Étape 2 : Cliquer sur "Créer une copie"
-            print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
-            time.sleep(3)
-
-            copie_button = None
-            # Essaie plusieurs méthodes pour trouver "Créer une copie"
-            selectors_copie = [
-                (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
-                (By.XPATH, "//span[contains(text(), 'Make a copy')]"),  # Version anglaise
-                (By.XPATH, "//*[contains(@class, 'MenuItem') and contains(., 'Créer une copie')]"),
-                (By.XPATH, "//*[contains(@class, 'MenuItem') and contains(., 'Make a copy')]"),
-                (By.XPATH, "//button[contains(., 'Créer une copie')]"),
-                (By.XPATH, "//button[contains(., 'Make a copy')]"),
-                (By.XPATH, "//*[@role='menuitem' and contains(., 'Créer une copie')]"),
-                (By.XPATH, "//*[@role='menuitem' and contains(., 'Make a copy')]"),
-            ]
-
-            for selector_type, selector_value in selectors_copie:
-                try:
-                    print(f"[DEBUG] Tentative Créer une copie avec: {selector_type} - {selector_value[:50]}")
-                    copie_button = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((selector_type, selector_value))
-                    )
-                    print(f"[OK] Bouton 'Créer une copie' trouve avec: {selector_type}")
-                    break
-                except Exception as e:
-                    print(f"[DEBUG] Echec: {str(e)[:50]}")
-                    continue
-
-            if not copie_button:
-                raise Exception("Impossible de trouver le bouton 'Créer une copie'")
-
-            copie_button.click()
-            time.sleep(2)
+            print("[INFO]   - Appui sur ENTER (ouvrir 'Créer une copie')")
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            time.sleep(1.5)
             print("[OK] Menu 'Créer une copie' ouvert")
 
-            # Étape 3 : Cliquer sur "Télécharger une copie" (ou "Download a copy")
-            print("[INFO] Etape 3/3 : Clic sur 'Télécharger une copie'...")
-            time.sleep(2)
+            # Étape 3 : Navigation vers "Télécharger une copie"
+            print("[INFO] Etape 3/3 : Navigation clavier vers 'Télécharger une copie'...")
+            print("[INFO]   - Appui sur TAB")
+            actions.send_keys(Keys.TAB)
+            actions.perform()
+            time.sleep(0.5)
 
-            download_button = None
-            # Essaie plusieurs méthodes pour trouver "Télécharger une copie" / "Download a copy"
-            selectors_download = [
-                # Versions françaises
-                (By.XPATH, "//span[text()='Télécharger une copie']"),
-                (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
-                (By.XPATH, "//*[contains(@class, 'MenuItem')]//span[contains(text(), 'Télécharger une copie')]"),
-                (By.XPATH, "//*[@role='menuitem' and contains(., 'Télécharger une copie')]"),
-                # Versions anglaises
-                (By.XPATH, "//span[text()='Download a copy']"),
-                (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
-                (By.XPATH, "//*[contains(@class, 'MenuItem')]//span[contains(text(), 'Download a copy')]"),
-                (By.XPATH, "//*[@role='menuitem' and contains(., 'Download a copy')]"),
-            ]
-
-            for selector_type, selector_value in selectors_download:
-                try:
-                    print(f"[DEBUG] Tentative Télécharger une copie avec: {selector_type} - {selector_value[:60]}")
-                    download_button = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((selector_type, selector_value))
-                    )
-                    print(f"[OK] Bouton 'Télécharger une copie' trouve avec: {selector_type}")
-                    break
-                except Exception as e:
-                    print(f"[DEBUG] Echec: {str(e)[:50]}")
-                    continue
-
-            if not download_button:
-                raise Exception("Impossible de trouver le bouton 'Télécharger une copie / Download a copy'")
-
-            download_button.click()
-            time.sleep(2)
+            print("[INFO]   - Appui sur ENTER (lancer téléchargement)")
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            time.sleep(1)
             print("[OK] Telechargement XLSX lance!")
             download_clicked = True
 
