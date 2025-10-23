@@ -397,7 +397,7 @@ def download_sharepoint_file(username, password, url, output_path):
                             if df is None:
                                 raise Exception("Impossible de decoder le CSV avec les encodages supportes")
 
-                            df.to_excel(final_path, index=False, engine='openpyxl')
+                            df.to_excel(final_path, index=False, engine='openpyxl', sheet_name='2025')
                             print(f"[OK] Fichier converti et sauvegarde: {os.path.basename(final_path)}")
                             # Supprime le CSV temporaire
                             latest_file.unlink()
