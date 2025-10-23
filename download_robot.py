@@ -68,11 +68,15 @@ def download_sharepoint_file(username, password, url, output_path):
     # Détecte si on est dans un environnement CI/CD (GitHub Actions, etc.)
     is_ci = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
 
-    # TOUJOURS en mode headless pour simuler l'environnement GitHub Actions
-    chrome_options.add_argument("--headless=new")  # Nouveau mode headless plus stable
-    print("[INFO] Mode headless active (simulation GitHub Actions)")
+    if is_ci:
+        # Mode headless obligatoire pour CI/CD
+        chrome_options.add_argument("--headless=new")  # Nouveau mode headless plus stable
+        print("[INFO] Mode CI/CD detecte - Mode headless active")
+    else:
+        # Mode graphique pour usage local (debugging plus facile)
+        print("[INFO] Mode local - Mode graphique active")
 
-    # Options anti-détection pour contourner les protections SharePoint
+    # Options communes pour tous les environnements
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -81,16 +85,15 @@ def download_sharepoint_file(username, password, url, output_path):
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-infobars")
 
-    # Masque les indices que c'est un navigateur automatisé
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
-
     # User agent pour éviter la détection de bot
     chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-    # Options spécifiques pour headless
-    chrome_options.add_argument("--disable-setuid-sandbox")
-    chrome_options.add_argument("--remote-debugging-port=9222")
+    # Options spécifiques pour CI/CD
+    if is_ci:
+        chrome_options.add_argument("--disable-setuid-sandbox")
+        chrome_options.add_argument("--remote-debugging-port=9222")
+    else:
+        chrome_options.add_argument("--start-maximized")
 
     driver = None
 
@@ -100,16 +103,6 @@ def download_sharepoint_file(username, password, url, output_path):
         # Essaie d'utiliser Chrome
         try:
             driver = webdriver.Chrome(options=chrome_options)
-
-            # Masque webdriver avec JavaScript
-            driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-                'source': '''
-                    Object.defineProperty(navigator, 'webdriver', {
-                        get: () => undefined
-                    });
-                '''
-            })
-
             print("[OK] Chrome demarre")
         except Exception as e:
             print(f"[WARN] Impossible de demarrer Chrome: {e}")
@@ -223,8 +216,8 @@ def download_sharepoint_file(username, password, url, output_path):
             print(f"[WARN] Impossible de basculer vers iframe: {e}")
             print("[INFO] Continuation sans iframe...")
 
-        # Téléchargement via : Fichier → Créer une copie → Télécharger une copie
-        print("[INFO] Navigation : Fichier -> Créer une copie -> Télécharger une copie...")
+        # Téléchargement via : Fichier → Exporter → Télécharger au format CSV
+        print("[INFO] Navigation dans les menus : Fichier -> Exporter -> CSV...")
 
         download_clicked = False
 
@@ -233,22 +226,18 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[INFO] Etape 1/3 : Clic sur 'Fichier'...")
 
             fichier_button = None
-            # Sélecteurs pour "Fichier" / "File" (ID stable - priorité absolue)
-            selectors_fichier = [
-                # Priorité 1 : ID stable (fonctionne en toutes langues)
+            # Essaie plusieurs méthodes pour trouver le bouton "Fichier"
+            selectors = [
                 (By.ID, "FileMenuFlyoutLauncher"),
                 (By.CSS_SELECTOR, "#FileMenuFlyoutLauncher > span"),
                 (By.XPATH, "//*[@id='FileMenuFlyoutLauncher']/span"),
-                # Priorité 2 : Classes CSS stables
-                (By.XPATH, "//button[@id='FileMenuFlyoutLauncher']/span[contains(@class, 'textContainer')]"),
-                # Priorité 3 : Fallback par texte (dernière solution)
-                (By.XPATH, "//span[text()='File']"),
-                (By.XPATH, "//span[text()='Fichier']"),
+                (By.XPATH, "//span[contains(@class, 'textContainer') and contains(text(), 'Fichier')]"),
+                (By.XPATH, "//button[@id='FileMenuFlyoutLauncher']//span"),
             ]
 
-            for selector_type, selector_value in selectors_fichier:
+            for selector_type, selector_value in selectors:
                 try:
-                    print(f"[DEBUG] Tentative Fichier avec: {selector_type} - {str(selector_value)[:60]}")
+                    print(f"[DEBUG] Tentative avec: {selector_type} - {selector_value}")
                     fichier_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((selector_type, selector_value))
                     )
@@ -261,123 +250,92 @@ def download_sharepoint_file(username, password, url, output_path):
             if not fichier_button:
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
-            # Utilise JavaScript pour simuler un vrai clic
-            print("[LOG] Etape: Déclenchement du clic JavaScript sur bouton Fichier")
-            print("[LOG] Element trouvé:", fichier_button.get_attribute('id'))
-
-            driver.execute_script("""
-                var element = arguments[0];
-                var events = ['mousedown', 'mouseup', 'click'];
-                events.forEach(function(eventType) {
-                    var event = new MouseEvent(eventType, {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    element.dispatchEvent(event);
-                });
-            """, fichier_button)
-            print("[LOG] Clic JavaScript exécuté")
-
-            # Attend que le menu se charge
-            print("[LOG] Attente de 3 secondes pour chargement menu...")
+            fichier_button.click()
             time.sleep(3)
-            print("[LOG] Attente terminée")
+            print("[OK] Menu 'Fichier' ouvert")
 
-            # Cherche d'abord DANS l'iframe
-            print("[LOG] === Recherche dans IFRAME ===")
-            try:
-                all_spans_iframe = driver.find_elements(By.TAG_NAME, "span")
-                print(f"[LOG] Nombre de spans trouvés dans iframe: {len(all_spans_iframe)}")
-                iframe_texts = [s.text.strip() for s in all_spans_iframe[:100] if s.text.strip() and len(s.text.strip()) > 2]
-                unique_iframe = list(set(iframe_texts))[:30]
-                print(f"[LOG] Textes uniques dans iframe ({len(unique_iframe)}): {unique_iframe}")
+            # Capture d'écran pour debug (si en mode CI/CD)
+            if is_ci:
+                try:
+                    screenshot_path = os.path.join(download_dir, "debug_menu_fichier.png")
+                    driver.save_screenshot(screenshot_path)
+                    print(f"[DEBUG] Screenshot sauvegarde: {screenshot_path}")
+                except:
+                    pass
 
-                # Cherche spécifiquement "Make" ou "copy"
-                make_copy_found = [t for t in iframe_texts if 'make' in t.lower() or 'copy' in t.lower() or 'copie' in t.lower()]
-                if make_copy_found:
-                    print(f"[LOG] *** TROUVÉ dans iframe: {make_copy_found}")
-            except Exception as e:
-                print(f"[LOG] Erreur recherche iframe: {e}")
+            # Étape 2 : Cliquer sur "Exporter"
+            print("[INFO] Etape 2/3 : Clic sur 'Exporter'...")
+            time.sleep(3)
 
-            # Ensuite cherche HORS de l'iframe
-            print("[LOG] === Sortie de l'iframe ===")
-            driver.switch_to.default_content()
-            print("[LOG] Context changé vers page principale")
+            exporter_button = None
+            # Essaie plusieurs méthodes pour trouver "Exporter"
+            selectors_exporter = [
+                (By.XPATH, "//span[contains(text(), 'Exporter')]"),
+                (By.XPATH, "//span[contains(text(), 'Export')]"),  # Version anglaise
+                (By.XPATH, "//*[contains(@class, 'MenuItem') and contains(., 'Exporter')]"),
+                (By.XPATH, "//*[contains(@class, 'MenuItem') and contains(., 'Export')]"),
+                (By.XPATH, "//button[contains(., 'Exporter')]"),
+                (By.XPATH, "//button[contains(., 'Export')]"),
+                (By.XPATH, "//*[@role='menuitem' and contains(., 'Exporter')]"),
+                (By.XPATH, "//*[@role='menuitem' and contains(., 'Export')]"),
+            ]
 
-            print("[LOG] Attente de 2 secondes...")
-            time.sleep(2)
-            print("[LOG] Attente terminée")
-
-            # Recherche HORS de l'iframe
-            print("[LOG] === Recherche dans PAGE PRINCIPALE ===")
-            try:
-                all_spans_main = driver.find_elements(By.TAG_NAME, "span")
-                print(f"[LOG] Nombre de spans trouvés hors iframe: {len(all_spans_main)}")
-
-                main_texts = []
-                for span in all_spans_main[:200]:
-                    try:
-                        text = span.text.strip()
-                        if text and len(text) > 2 and len(text) < 50:
-                            main_texts.append(text)
-                    except:
-                        pass
-
-                unique_main = list(set(main_texts))[:40]
-                print(f"[LOG] Textes uniques hors iframe ({len(unique_main)}): {unique_main}")
-
-                # Cherche spécifiquement "Make" ou "copy"
-                make_copy_main = [t for t in main_texts if 'make' in t.lower() or 'copy' in t.lower() or 'copie' in t.lower()]
-                if make_copy_main:
-                    print(f"[LOG] *** TROUVÉ hors iframe: {make_copy_main}")
-                else:
-                    print("[LOG] Aucun texte 'Make', 'copy' ou 'copie' trouvé")
-            except Exception as e:
-                print(f"[LOG] Erreur recherche main: {e}")
-
-            # ÉTAPE 2: Navigation CLAVIER - TAB + ENTER
-            print("[LOG] === ETAPE 2: Navigation CLAVIER ===")
-            print("[LOG] Stratégie: TAB pour naviguer, ENTER pour sélectionner")
-
-            from selenium.webdriver.common.keys import Keys
-            from selenium.webdriver.common.action_chains import ActionChains
-
-            # Retourne dans l'iframe pour la navigation clavier
-            print("[LOG] Retour dans l'iframe pour navigation clavier")
-            iframes = driver.find_elements(By.TAG_NAME, "iframe")
-            for iframe in iframes:
-                iframe_id = iframe.get_attribute("id")
-                if "WacFrame" in str(iframe_id) or "Excel" in str(iframe_id):
-                    driver.switch_to.frame(iframe)
-                    print(f"[LOG] Dans iframe: {iframe_id}")
+            for selector_type, selector_value in selectors_exporter:
+                try:
+                    print(f"[DEBUG] Tentative Exporter avec: {selector_type} - {selector_value[:50]}")
+                    exporter_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    print(f"[OK] Bouton 'Exporter' trouve avec: {selector_type}")
                     break
+                except Exception as e:
+                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                    continue
 
-            actions = ActionChains(driver)
+            if not exporter_button:
+                raise Exception("Impossible de trouver le bouton 'Exporter'")
 
-            # Essayons FLECHE BAS au lieu de TAB (menus utilisent souvent les flèches)
-            print("[LOG] Navigation: ARROW_DOWN + ENTER (Make a copy) + ARROW_DOWN + ENTER (Download)")
+            exporter_button.click()
+            time.sleep(2)
+            print("[OK] Menu 'Exporter' ouvert")
 
-            # Flèche BAS pour aller à "Make a copy"
-            print("[LOG] Action 1: ARROW_DOWN")
-            actions.send_keys(Keys.ARROW_DOWN).perform()
-            time.sleep(1)
-
-            print("[LOG] Action 2: ENTER (ouvrir Make a copy)")
-            actions.send_keys(Keys.ENTER).perform()
+            # Étape 3 : Cliquer sur "Télécharger au format CSV" (ou "Download as CSV")
+            print("[INFO] Etape 3/3 : Clic sur 'Telecharger au format CSV'...")
             time.sleep(2)
 
-            # Flèche BAS pour aller à "Download a copy" dans le sous-menu
-            print("[LOG] Action 3: ARROW_DOWN")
-            actions.send_keys(Keys.ARROW_DOWN).perform()
-            time.sleep(1)
+            csv_button = None
+            # Essaie plusieurs méthodes pour trouver "Télécharger au format CSV" / "Download as CSV"
+            selectors_csv = [
+                # Versions françaises
+                (By.XPATH, "//span[text()='Télécharger au format CSV']"),
+                (By.XPATH, "//span[contains(text(), 'Télécharger au format CSV') and not(contains(text(), 'UTF'))]"),
+                (By.XPATH, "//*[contains(@class, 'MenuItem')]//span[contains(text(), 'Télécharger au format CSV')]"),
+                (By.XPATH, "//*[@role='menuitem' and contains(., 'Télécharger au format CSV')]"),
+                # Versions anglaises
+                (By.XPATH, "//span[text()='Download as CSV']"),
+                (By.XPATH, "//span[contains(text(), 'Download') and contains(text(), 'CSV') and not(contains(text(), 'UTF'))]"),
+                (By.XPATH, "//*[contains(@class, 'MenuItem')]//span[contains(text(), 'Download') and contains(text(), 'CSV')]"),
+                (By.XPATH, "//*[@role='menuitem' and contains(., 'Download') and contains(., 'CSV')]"),
+            ]
 
-            print("[LOG] Action 4: ENTER (télécharger)")
-            actions.send_keys(Keys.ENTER).perform()
+            for selector_type, selector_value in selectors_csv:
+                try:
+                    print(f"[DEBUG] Tentative CSV avec: {selector_type} - {selector_value[:60]}")
+                    csv_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    print(f"[OK] Bouton 'CSV' trouve avec: {selector_type}")
+                    break
+                except Exception as e:
+                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                    continue
+
+            if not csv_button:
+                raise Exception("Impossible de trouver le bouton 'Télécharger au format CSV / Download as CSV'")
+
+            csv_button.click()
             time.sleep(2)
-
-            print("[LOG] *** Navigation clavier terminée")
-            print("[OK] Telechargement XLSX lance via clavier!")
+            print("[OK] Telechargement CSV lance!")
             download_clicked = True
 
         except Exception as e:
@@ -385,43 +343,79 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[ERREUR] Le telechargement automatique a echoue")
             return False
 
-        # Si on arrive ici, le téléchargement XLSX a été lancé
-        print("[INFO] Attente de la fin du telechargement XLSX...")
+        # Si on arrive ici, le clic sur CSV a réussi
+        # Attend que le téléchargement soit terminé
+        print("[INFO] Attente de la fin du telechargement...")
 
         # Vérifie périodiquement si le fichier apparaît
-        max_wait = 40  # 40 secondes maximum
+        max_wait = 30  # 30 secondes maximum
         check_interval = 2  # Vérifie toutes les 2 secondes
         elapsed = 0
 
-        # Cherche les fichiers .xlsx dans le dossier de téléchargement
+        # Cherche les fichiers .csv ou .xlsx dans le dossier de téléchargement
         while elapsed < max_wait:
             time.sleep(check_interval)
             elapsed += check_interval
 
-            # Cherche les fichiers XLSX téléchargés
+            # Cherche les fichiers téléchargés (CSV ou XLSX)
+            csv_files = list(Path(download_dir).glob("*.csv"))
             xlsx_files = list(Path(download_dir).glob("*.xlsx"))
+            all_files = csv_files + xlsx_files
 
             # Filtre les fichiers temporaires
-            xlsx_files = [f for f in xlsx_files if not f.name.endswith('.crdownload')
+            all_files = [f for f in all_files if not f.name.endswith('.crdownload')
                          and not f.name.endswith('.tmp')
                          and not f.name.startswith('~')]
 
-            if xlsx_files:
+            if all_files:
                 # Prend le fichier le plus récent
-                latest_file = max(xlsx_files, key=lambda f: f.stat().st_mtime)
+                latest_file = max(all_files, key=lambda f: f.stat().st_mtime)
 
-                # Vérifie qu'il a été modifié récemment (dans les 40 dernières secondes)
-                if time.time() - latest_file.stat().st_mtime < 40:
-                    print(f"[OK] Fichier XLSX detecte: {latest_file.name}")
+                # Vérifie qu'il a été modifié récemment (dans les 30 dernières secondes)
+                if time.time() - latest_file.stat().st_mtime < 30:
+                    print(f"[OK] Fichier detecte: {latest_file.name}")
 
-                    # Renomme si nécessaire
-                    if str(latest_file) != output_path:
-                        import shutil
-                        shutil.move(str(latest_file), output_path)
-                        print(f"[OK] Fichier renomme vers: {os.path.basename(output_path)}")
+                    # Le fichier de sortie doit toujours être .xlsx pour FAC
+                    final_path = output_path
+
+                    # Si c'est un CSV, on le convertit en Excel
+                    if latest_file.suffix == '.csv':
+                        print("[INFO] Conversion CSV -> Excel...")
+                        try:
+                            import pandas as pd
+                            # Essaie plusieurs encodages
+                            encodings = ['utf-8-sig', 'iso-8859-1', 'cp1252', 'latin1']
+                            df = None
+                            for encoding in encodings:
+                                try:
+                                    df = pd.read_csv(str(latest_file), sep=';', encoding=encoding)
+                                    print(f"[OK] CSV lu avec encodage: {encoding}")
+                                    break
+                                except (UnicodeDecodeError, UnicodeError):
+                                    continue
+
+                            if df is None:
+                                raise Exception("Impossible de decoder le CSV avec les encodages supportes")
+
+                            df.to_excel(final_path, index=False, engine='openpyxl')
+                            print(f"[OK] Fichier converti et sauvegarde: {os.path.basename(final_path)}")
+                            # Supprime le CSV temporaire
+                            latest_file.unlink()
+                        except Exception as e:
+                            print(f"[WARN] Erreur conversion CSV: {e}")
+                            print("[INFO] Conservation du fichier CSV original")
+                            # Renomme en .xlsx même si c'est du CSV (t.py pourra le lire)
+                            import shutil
+                            shutil.move(str(latest_file), final_path)
+                    else:
+                        # C'est déjà un XLSX, renomme si nécessaire
+                        if str(latest_file) != final_path:
+                            import shutil
+                            shutil.move(str(latest_file), final_path)
+                            print(f"[OK] Fichier renomme vers: {os.path.basename(final_path)}")
 
                     # Vérifie la taille
-                    size_kb = Path(output_path).stat().st_size / 1024
+                    size_kb = Path(final_path).stat().st_size / 1024
                     print(f"[OK] Taille: {size_kb:.2f} KB")
 
                     return True
@@ -429,7 +423,7 @@ def download_sharepoint_file(username, password, url, output_path):
             if elapsed % 10 == 0:
                 print(f"  Attente... ({elapsed}/{max_wait}s)")
 
-        print("[ERREUR] Timeout atteint - fichier XLSX non telecharge")
+        print("[ERREUR] Timeout atteint - fichier non telecharge")
         return False
 
     except Exception as e:
