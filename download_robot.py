@@ -255,8 +255,8 @@ def download_sharepoint_file(username, password, url, output_path):
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
             fichier_button.click()
-            time.sleep(3)  # Augmenté à 3s pour laisser le menu se charger complètement
-            print("[OK] Menu 'Fichier' ouvert")
+            time.sleep(5)  # Augmenté à 5s pour s'assurer que le menu charge complètement
+            print("[OK] Menu 'Fichier' cliqué, attente chargement...")
 
             # Capture d'écran pour debug (si en mode CI/CD)
             if is_ci:
@@ -267,11 +267,16 @@ def download_sharepoint_file(username, password, url, output_path):
                 except:
                     pass
 
-            # DEBUG: Affiche tous les spans visibles pour comprendre ce qui est disponible
+            # DEBUG: Cherche dans toute la page (pas seulement iframe)
+            print("[DEBUG] Recherche de 'Make a copy' dans toute la page...")
             try:
+                # Sortir de l'iframe temporairement pour chercher partout
+                driver.switch_to.default_content()
+                time.sleep(2)
+
                 all_spans = driver.find_elements(By.TAG_NAME, "span")
                 menu_texts = []
-                for span in all_spans[:100]:  # Limite à 100
+                for span in all_spans[:150]:  # Augmenté à 150
                     try:
                         text = span.text.strip()
                         if text and len(text) > 2 and len(text) < 100:
@@ -279,10 +284,20 @@ def download_sharepoint_file(username, password, url, output_path):
                     except:
                         pass
                 if menu_texts:
-                    unique_texts = list(set(menu_texts))[:30]  # Unique texts, max 30
-                    print(f"[DEBUG] Textes disponibles dans la page: {unique_texts}")
+                    unique_texts = list(set(menu_texts))[:50]  # Plus de textes
+                    print(f"[DEBUG] Textes dans page complète: {unique_texts}")
+
+                # Retourner dans l'iframe
+                iframes = driver.find_elements(By.TAG_NAME, "iframe")
+                for iframe in iframes:
+                    iframe_id = iframe.get_attribute("id")
+                    if "WacFrame" in str(iframe_id) or "Excel" in str(iframe_id):
+                        driver.switch_to.frame(iframe)
+                        print(f"[DEBUG] Retour dans iframe: {iframe_id}")
+                        break
+
             except Exception as e:
-                print(f"[DEBUG] Erreur debug spans: {e}")
+                print(f"[DEBUG] Erreur debug: {e}")
 
             # Étape 2 : Cliquer sur "Créer une copie"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
