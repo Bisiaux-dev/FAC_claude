@@ -226,13 +226,15 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[INFO] Etape 1/3 : Clic sur 'Fichier'...")
 
             fichier_button = None
-            # Sélecteurs pour "Fichier"
+            # Sélecteurs pour "Fichier" / "File" (ID stable fonctionne dans les deux langues)
             selectors_fichier = [
                 (By.CSS_SELECTOR, "#FileMenuFlyoutLauncher > span"),
                 (By.XPATH, "//*[@id='FileMenuFlyoutLauncher']/span"),
                 (By.ID, "FileMenuFlyoutLauncher"),
-                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='Fichier']"),
+                (By.XPATH, "//span[text()='File']"),
                 (By.XPATH, "//span[text()='Fichier']"),
+                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='File']"),
+                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='Fichier']"),
             ]
 
             for selector_type, selector_value in selectors_fichier:
@@ -268,14 +270,14 @@ def download_sharepoint_file(username, password, url, output_path):
             time.sleep(2)
 
             copie_button = None
-            # Sélecteurs pour "Créer une copie" (basés sur le texte car ID dynamique)
+            # Sélecteurs pour "Créer une copie" / "Make a copy" (anglais en premier pour CI/CD)
             selectors_copie = [
-                (By.XPATH, "//span[text()='Créer une copie']"),
                 (By.XPATH, "//span[text()='Make a copy']"),
-                (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
+                (By.XPATH, "//span[text()='Créer une copie']"),
                 (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Créer une copie']"),
+                (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
                 (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Make a copy']"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Créer une copie']"),
             ]
 
             for selector_type, selector_value in selectors_copie:
@@ -302,14 +304,14 @@ def download_sharepoint_file(username, password, url, output_path):
             time.sleep(2)
 
             download_button = None
-            # Sélecteurs pour "Télécharger une copie"
+            # Sélecteurs pour "Télécharger une copie" / "Download a copy" (anglais en premier pour CI/CD)
             selectors_download = [
-                (By.XPATH, "//span[text()='Télécharger une copie']"),
                 (By.XPATH, "//span[text()='Download a copy']"),
-                (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
+                (By.XPATH, "//span[text()='Télécharger une copie']"),
                 (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Télécharger une copie']"),
+                (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
                 (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Download a copy']"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Télécharger une copie']"),
             ]
 
             for selector_type, selector_value in selectors_download:
