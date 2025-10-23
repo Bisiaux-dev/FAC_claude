@@ -226,15 +226,17 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[INFO] Etape 1/3 : Clic sur 'Fichier'...")
 
             fichier_button = None
-            # Sélecteurs pour "Fichier" / "File" (ID stable fonctionne dans les deux langues)
+            # Sélecteurs pour "Fichier" / "File" (ID stable - priorité absolue)
             selectors_fichier = [
+                # Priorité 1 : ID stable (fonctionne en toutes langues)
+                (By.ID, "FileMenuFlyoutLauncher"),
                 (By.CSS_SELECTOR, "#FileMenuFlyoutLauncher > span"),
                 (By.XPATH, "//*[@id='FileMenuFlyoutLauncher']/span"),
-                (By.ID, "FileMenuFlyoutLauncher"),
+                # Priorité 2 : Classes CSS stables
+                (By.XPATH, "//button[@id='FileMenuFlyoutLauncher']/span[contains(@class, 'textContainer')]"),
+                # Priorité 3 : Fallback par texte (dernière solution)
                 (By.XPATH, "//span[text()='File']"),
                 (By.XPATH, "//span[text()='Fichier']"),
-                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='File']"),
-                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='Fichier']"),
             ]
 
             for selector_type, selector_value in selectors_fichier:
@@ -270,14 +272,21 @@ def download_sharepoint_file(username, password, url, output_path):
             time.sleep(2)
 
             copie_button = None
-            # Sélecteurs pour "Créer une copie" / "Make a copy" (anglais en premier pour CI/CD)
+            # Sélecteurs pour "Créer une copie" / "Make a copy"
             selectors_copie = [
-                (By.XPATH, "//span[text()='Make a copy']"),
-                (By.XPATH, "//span[text()='Créer une copie']"),
+                # Priorité 1 : Classe CSS stable fui-MenuItem__content (indépendante de la langue)
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and (text()='Make a copy' or text()='Créer une copie')]"),
+                # Priorité 2 : Texte exact (anglais d'abord pour CI/CD)
+                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Make a copy']"),
+                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Créer une copie']"),
+                # Priorité 3 : Texte partiel
                 (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
                 (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Make a copy']"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Créer une copie']"),
+                # Priorité 4 : ID si disponible (peut être dynamique mais tentons)
+                (By.CSS_SELECTOR, "#menurjj > span.fui-MenuItem__content"),
+                # Priorité 5 : Fallback - n'importe quel menu item avec le texte
+                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Make a copy']"),
+                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Créer une copie']"),
             ]
 
             for selector_type, selector_value in selectors_copie:
@@ -304,14 +313,22 @@ def download_sharepoint_file(username, password, url, output_path):
             time.sleep(2)
 
             download_button = None
-            # Sélecteurs pour "Télécharger une copie" / "Download a copy" (anglais en premier pour CI/CD)
+            # Sélecteurs pour "Télécharger une copie" / "Download a copy"
             selectors_download = [
-                (By.XPATH, "//span[text()='Download a copy']"),
-                (By.XPATH, "//span[text()='Télécharger une copie']"),
+                # Priorité 1 : Classe CSS stable fui-MenuItem__content (indépendante de la langue)
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and (text()='Download a copy' or text()='Télécharger une copie')]"),
+                # Priorité 2 : Texte exact avec classe stable (anglais d'abord pour CI/CD)
+                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Download a copy']"),
+                (By.XPATH, "//span[@class='fui-MenuItem__content' and text()='Télécharger une copie']"),
+                # Priorité 3 : Texte partiel
                 (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
                 (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Download a copy']"),
-                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Télécharger une copie']"),
+                # Priorité 4 : Structure du menu avec rôle ARIA
+                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Download a copy']"),
+                (By.XPATH, "//div[contains(@role, 'menuitem')]//span[text()='Télécharger une copie']"),
+                # Priorité 5 : Fallback - recherche dans tous les spans visibles
+                (By.XPATH, "//span[normalize-space()='Download a copy']"),
+                (By.XPATH, "//span[normalize-space()='Télécharger une copie']"),
             ]
 
             for selector_type, selector_value in selectors_download:
