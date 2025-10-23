@@ -338,74 +338,48 @@ def download_sharepoint_file(username, password, url, output_path):
             except Exception as e:
                 print(f"[LOG] Erreur recherche main: {e}")
 
-            # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
-            print("[LOG] === ETAPE 2: Recherche 'Make a copy' ===")
-            time.sleep(2 if is_ci else 1)
+            # ÉTAPE 2: Navigation CLAVIER - TAB + ENTER
+            print("[LOG] === ETAPE 2: Navigation CLAVIER ===")
+            print("[LOG] Stratégie: TAB pour naviguer, ENTER pour sélectionner")
 
-            copie_button = None
-            selectors_copie = [
-                (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
-                (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
-            ]
+            from selenium.webdriver.common.keys import Keys
+            from selenium.webdriver.common.action_chains import ActionChains
 
-            # Augmente le timeout pour CI/CD (menu plus lent à apparaître)
-            wait_timeout = 20 if is_ci else 5
-            print(f"[LOG] Timeout d'attente: {wait_timeout} secondes")
-
-            for idx, (selector_type, selector_value) in enumerate(selectors_copie, 1):
-                print(f"[LOG] Tentative {idx}/{len(selectors_copie)}: {str(selector_value)[:60]}")
-                try:
-                    # Attend juste la PRÉSENCE (pas clickable), puis on force le clic avec JS
-                    print(f"[LOG] Attente de l'élément (max {wait_timeout}s)...")
-                    copie_button = WebDriverWait(driver, wait_timeout).until(
-                        EC.presence_of_element_located((selector_type, selector_value))
-                    )
-                    print(f"[LOG] *** SUCCÈS! Element trouvé avec sélecteur {idx}")
-                    print(f"[LOG] Texte de l'élément: {copie_button.text}")
+            # Retourne dans l'iframe pour la navigation clavier
+            print("[LOG] Retour dans l'iframe pour navigation clavier")
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            for iframe in iframes:
+                iframe_id = iframe.get_attribute("id")
+                if "WacFrame" in str(iframe_id) or "Excel" in str(iframe_id):
+                    driver.switch_to.frame(iframe)
+                    print(f"[LOG] Dans iframe: {iframe_id}")
                     break
-                except Exception as e:
-                    print(f"[LOG] Échec tentative {idx}: {str(e)[:80]}")
-                    continue
 
-            if not copie_button:
-                print("[LOG] *** ERREUR: Aucun sélecteur n'a fonctionné")
-                raise Exception("Impossible de trouver 'Créer une copie'")
+            actions = ActionChains(driver)
 
-            # Utilise JavaScript pour cliquer (plus fiable en headless)
-            print("[DEBUG] Clic JavaScript sur 'Créer une copie'")
-            driver.execute_script("arguments[0].click();", copie_button)
-            time.sleep(3)
-            print("[OK] 'Créer une copie' clique")
+            # Séquence: TAB (aller à "Make a copy") + ENTER + TAB (aller à "Download a copy") + ENTER
+            print("[LOG] Navigation: TAB + ENTER (Make a copy) + TAB + ENTER (Download a copy)")
 
-            # Étape 3 : Cliquer sur "Télécharger une copie"
-            print("[INFO] Etape 3/3 : Clic sur 'Télécharger une copie'...")
+            # 1er TAB + ENTER pour "Make a copy"
+            print("[LOG] Action 1: TAB")
+            actions.send_keys(Keys.TAB).perform()
+            time.sleep(1)
+
+            print("[LOG] Action 2: ENTER (sélectionner Make a copy)")
+            actions.send_keys(Keys.ENTER).perform()
             time.sleep(2)
 
-            download_button = None
-            selectors_download = [
-                (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
-                (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
-            ]
+            # 2ème TAB + ENTER pour "Download a copy"
+            print("[LOG] Action 3: TAB")
+            actions.send_keys(Keys.TAB).perform()
+            time.sleep(1)
 
-            for selector_type, selector_value in selectors_download:
-                try:
-                    print(f"[DEBUG] Tentative Télécharger: {str(selector_value)[:60]}")
-                    download_button = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((selector_type, selector_value))
-                    )
-                    print(f"[OK] 'Télécharger une copie' trouve")
-                    break
-                except:
-                    continue
-
-            if not download_button:
-                raise Exception("Impossible de trouver 'Télécharger une copie'")
-
-            # Utilise JavaScript pour cliquer
-            print("[DEBUG] Clic JavaScript sur 'Télécharger une copie'")
-            driver.execute_script("arguments[0].click();", download_button)
+            print("[LOG] Action 4: ENTER (sélectionner Download a copy)")
+            actions.send_keys(Keys.ENTER).perform()
             time.sleep(2)
-            print("[OK] Telechargement XLSX lance!")
+
+            print("[LOG] *** Navigation clavier terminée")
+            print("[OK] Telechargement XLSX lance via clavier!")
             download_clicked = True
 
         except Exception as e:
