@@ -262,12 +262,14 @@ def download_sharepoint_file(username, password, url, output_path):
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
             fichier_button.click()
-            time.sleep(3)
             print("[OK] Bouton 'Fichier' clique!")
+
+            # Attend que le menu se charge (plus long sur Linux)
+            time.sleep(5 if is_ci else 3)
 
             # Étape 2 : Cliquer sur "Créer une copie" / "Make a copy"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
-            time.sleep(2)
+            time.sleep(3 if is_ci else 2)
 
             copie_button = None
             selectors_copie = [
@@ -275,10 +277,13 @@ def download_sharepoint_file(username, password, url, output_path):
                 (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
             ]
 
+            # Augmente le timeout pour CI/CD (menu plus lent à apparaître)
+            wait_timeout = 15 if is_ci else 5
+
             for selector_type, selector_value in selectors_copie:
                 try:
                     print(f"[DEBUG] Tentative Créer une copie: {str(selector_value)[:60]}")
-                    copie_button = WebDriverWait(driver, 5).until(
+                    copie_button = WebDriverWait(driver, wait_timeout).until(
                         EC.element_to_be_clickable((selector_type, selector_value))
                     )
                     print(f"[OK] 'Créer une copie' trouve")
