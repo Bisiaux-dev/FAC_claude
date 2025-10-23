@@ -255,7 +255,7 @@ def download_sharepoint_file(username, password, url, output_path):
                 raise Exception("Impossible de trouver le bouton 'Fichier'")
 
             fichier_button.click()
-            time.sleep(2)
+            time.sleep(3)  # Augmenté à 3s pour laisser le menu se charger complètement
             print("[OK] Menu 'Fichier' ouvert")
 
             # Capture d'écran pour debug (si en mode CI/CD)
@@ -266,6 +266,23 @@ def download_sharepoint_file(username, password, url, output_path):
                     print(f"[DEBUG] Screenshot sauvegarde: {screenshot_path}")
                 except:
                     pass
+
+            # DEBUG: Affiche tous les spans visibles pour comprendre ce qui est disponible
+            try:
+                all_spans = driver.find_elements(By.TAG_NAME, "span")
+                menu_texts = []
+                for span in all_spans[:100]:  # Limite à 100
+                    try:
+                        text = span.text.strip()
+                        if text and len(text) > 2 and len(text) < 100:
+                            menu_texts.append(text)
+                    except:
+                        pass
+                if menu_texts:
+                    unique_texts = list(set(menu_texts))[:30]  # Unique texts, max 30
+                    print(f"[DEBUG] Textes disponibles dans la page: {unique_texts}")
+            except Exception as e:
+                print(f"[DEBUG] Erreur debug spans: {e}")
 
             # Étape 2 : Cliquer sur "Créer une copie"
             print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
