@@ -25,9 +25,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # Override recipients for workflow 2 (with PowerPoint)
 WORKFLOW_2_RECIPIENTS = [
+    'bisiaux.pierre@outlook.fr',
     'b.hunalp@rhreflex.com',
-    'markovski@rhreflex.com',
-    'nicolas@perspectivia.fr',
+    # 'markovski@rhreflex.com',
+    # 'nicolas@perspectivia.fr',
 ]
 
 try:
@@ -183,88 +184,21 @@ class CRMReportSender:
         generation_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
         stats = self.get_checklist_stats()
 
-        # Template email simplifié pour workflow 2
+        # Email minimal - Seulement titre et pièce jointe
         body_text = f'''Bonjour,
 
 Veuillez trouver ci-joint le rapport de présentation PERSPECTIVIA.
 
-RÉSUMÉ DES CHECKLISTS:
-- Commercial: {stats['commercial_count']} dossiers
-- Dépôt client: {stats['depot_client_count']} dossiers
-- Admin dépôt initial: {stats['admin_depot_count']} dossiers
-- Admin vérification: {stats['admin_verif_count']} dossiers
-- Cindy (facturation): {stats['cindy_count']} dossiers
-- Facturation en retard: {stats['facturation_retard_count']} dossiers
-- Trésorerie en retard: {stats['tresorerie_count']} dossiers
-
-TOTAL: {stats['total_count']} dossiers à traiter
-
-Le détail complet est disponible dans la présentation PowerPoint ci-jointe.
-
-Date de génération: {generation_date}
-
 Cordialement,
 Système d'automatisation PERSPECTIVIA
-
----
-Ce rapport a été généré automatiquement par FAC Automation
-Pour toute question technique, contactez bisiaux.pierre@outlook.fr
 '''
 
         body_html = f'''<html>
 <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">
     <p>Bonjour,</p>
-
-    <p>Veuillez trouver ci-joint le <strong>rapport de présentation PERSPECTIVIA</strong>.</p>
-
-    <h3 style="color: #2c5aa0;">RÉSUMÉ DES CHECKLISTS</h3>
-    <table style="border-collapse: collapse; width: 100%;">
-        <tr style="background-color: #f5f5f5;">
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Commercial</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['commercial_count']} dossiers</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Dépôt client</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['depot_client_count']} dossiers</td>
-        </tr>
-        <tr style="background-color: #f5f5f5;">
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Admin dépôt initial</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['admin_depot_count']} dossiers</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Admin vérification</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['admin_verif_count']} dossiers</td>
-        </tr>
-        <tr style="background-color: #f5f5f5;">
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Cindy (facturation)</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['cindy_count']} dossiers</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Facturation en retard</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['facturation_retard_count']} dossiers</td>
-        </tr>
-        <tr style="background-color: #f5f5f5;">
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Trésorerie en retard</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{stats['tresorerie_count']} dossiers</td>
-        </tr>
-        <tr style="background-color: #e8f4f8; font-weight: bold;">
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>TOTAL</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>{stats['total_count']} dossiers</strong></td>
-        </tr>
-    </table>
-
-    <p style="margin-top: 20px;">Le détail complet est disponible dans la <strong>présentation PowerPoint ci-jointe</strong>.</p>
-
-    <p><em>Date de génération: {generation_date}</em></p>
-
+    <p>Veuillez trouver ci-joint le rapport de présentation PERSPECTIVIA.</p>
     <p>Cordialement,<br>
     Système d'automatisation PERSPECTIVIA</p>
-
-    <hr style="border: 1px solid #ccc; margin: 20px 0;">
-    <p style="font-size: 12px; color: #666;">
-    Ce rapport a été généré automatiquement par FAC Automation<br>
-    Pour toute question technique, contactez <a href="mailto:bisiaux.pierre@outlook.fr">bisiaux.pierre@outlook.fr</a>
-    </p>
 </body>
 </html>'''
 

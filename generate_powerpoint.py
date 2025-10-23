@@ -5,10 +5,15 @@ Script pour générer le rapport PowerPoint PERSPECTIVIA
 """
 
 import os
+import sys
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
 import glob
+
+# Fix console encoding for Windows
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # =============================================================================
 # CONFIGURATION DYNAMIQUE
@@ -102,6 +107,14 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             img_left = Inches(0.5)
             img_top = Inches(1.2)
             img_width = Inches(9)
+
+            # Réduire de 10% la largeur et remonter de 15% la position verticale pour "Répartition des Formations par Vague et État"
+            if graph_filename == 'Statut_Formations_par_Vague.png':
+                img_width = Inches(9 * 0.9)  # Réduction de 10% en largeur
+                # Centrer le graphique réduit horizontalement
+                img_left = Inches(0.5 + (9 * 0.1) / 2)
+                # Remonter le graphique de 15% (diminuer img_top)
+                img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
             try:
                 pic = slide.shapes.add_picture(graph_file, img_left, img_top, width=img_width)

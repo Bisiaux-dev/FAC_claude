@@ -63,19 +63,22 @@ jobs:
         echo "=========================================="
         echo "  GÉNÉRATION DES CHECKLISTS"
         echo "=========================================="
-        python t.py
+        python pt2.py
         echo ""
         echo "Vérification des fichiers générés:"
         ls -lh Checklist/*.xlsx
 
-    - name: Send email WITHOUT PowerPoint (12 recipients)
+    - name: Send email WITHOUT PowerPoint (2 recipients - Pierre, Berfay)
       env:
         SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
         SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       run: |
         echo "=========================================="
         echo "  WORKFLOW 1: EMAIL SANS POWERPOINT"
-        echo "  12 DESTINATAIRES"
+        echo "  2 DESTINATAIRES:"
+        echo "  - bisiaux.pierre@outlook.fr"
+        echo "  - b.hunalp@rhreflex.com"
+        echo "  Pièces jointes: 8 fichiers Excel checklist"
         echo "=========================================="
         python email_sender/send_report_without_ppt.py
 

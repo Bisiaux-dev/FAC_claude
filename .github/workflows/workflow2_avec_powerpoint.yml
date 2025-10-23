@@ -63,7 +63,7 @@ jobs:
         echo "=========================================="
         echo "  GÉNÉRATION DES CHECKLISTS"
         echo "=========================================="
-        python t.py
+        python pt2.py
         echo ""
         echo "Vérification des fichiers générés:"
         ls -lh Checklist/*.xlsx
@@ -82,17 +82,17 @@ jobs:
           exit 1
         fi
 
-    - name: Send email WITH PowerPoint (3 recipients - Berfay, Markovski, Nicolas)
+    - name: Send email WITH PowerPoint (2 recipients - Pierre, Berfay)
       env:
         SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
         SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       run: |
         echo "=========================================="
         echo "  WORKFLOW 2: EMAIL AVEC POWERPOINT"
-        echo "  3 DESTINATAIRES:"
+        echo "  2 DESTINATAIRES:"
+        echo "  - bisiaux.pierre@outlook.fr"
         echo "  - b.hunalp@rhreflex.com"
-        echo "  - markovski@rhreflex.com"
-        echo "  - nicolas@perspectivia.fr"
+        echo "  Email simplifié (titre + pièce jointe uniquement)"
         echo "=========================================="
         python email_sender/send_report_with_ppt.py
 
