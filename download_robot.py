@@ -226,18 +226,18 @@ def download_sharepoint_file(username, password, url, output_path):
             print("[INFO] Etape 1/3 : Clic sur 'Fichier'...")
 
             fichier_button = None
-            # Essaie plusieurs méthodes pour trouver le bouton "Fichier"
-            selectors = [
-                (By.ID, "FileMenuFlyoutLauncher"),
+            # Sélecteurs pour "Fichier"
+            selectors_fichier = [
                 (By.CSS_SELECTOR, "#FileMenuFlyoutLauncher > span"),
                 (By.XPATH, "//*[@id='FileMenuFlyoutLauncher']/span"),
-                (By.XPATH, "//span[contains(@class, 'textContainer') and contains(text(), 'Fichier')]"),
-                (By.XPATH, "//button[@id='FileMenuFlyoutLauncher']//span"),
+                (By.ID, "FileMenuFlyoutLauncher"),
+                (By.XPATH, "//span[contains(@class, 'textContainer') and text()='Fichier']"),
+                (By.XPATH, "//span[text()='Fichier']"),
             ]
 
-            for selector_type, selector_value in selectors:
+            for selector_type, selector_value in selectors_fichier:
                 try:
-                    print(f"[DEBUG] Tentative avec: {selector_type} - {selector_value}")
+                    print(f"[DEBUG] Tentative Fichier avec: {selector_type} - {str(selector_value)[:60]}")
                     fichier_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((selector_type, selector_value))
                     )
@@ -254,37 +254,81 @@ def download_sharepoint_file(username, password, url, output_path):
             time.sleep(2)
             print("[OK] Menu 'Fichier' ouvert")
 
-            # Navigation au clavier : beaucoup plus fiable que les sélecteurs!
-            # Tab x2 → Enter → Tab x1 → Enter
-            from selenium.webdriver.common.keys import Keys
-            from selenium.webdriver.common.action_chains import ActionChains
+            # Capture d'écran pour debug (si en mode CI/CD)
+            if is_ci:
+                try:
+                    screenshot_path = os.path.join(download_dir, "debug_menu_fichier.png")
+                    driver.save_screenshot(screenshot_path)
+                    print(f"[DEBUG] Screenshot sauvegarde: {screenshot_path}")
+                except:
+                    pass
 
-            actions = ActionChains(driver)
+            # Étape 2 : Cliquer sur "Créer une copie"
+            print("[INFO] Etape 2/3 : Clic sur 'Créer une copie'...")
+            time.sleep(2)
 
-            # Étape 2 : Navigation vers "Créer une copie"
-            print("[INFO] Etape 2/3 : Navigation clavier vers 'Créer une copie'...")
-            print("[INFO]   - Appui sur TAB")
-            actions.send_keys(Keys.TAB)
-            actions.perform()
-            time.sleep(0.5)
+            copie_button = None
+            # Sélecteurs pour "Créer une copie" (basés sur le texte car ID dynamique)
+            selectors_copie = [
+                (By.XPATH, "//span[text()='Créer une copie']"),
+                (By.XPATH, "//span[text()='Make a copy']"),
+                (By.XPATH, "//span[contains(text(), 'Créer une copie')]"),
+                (By.XPATH, "//span[contains(text(), 'Make a copy')]"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Créer une copie']"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Make a copy']"),
+            ]
 
-            print("[INFO]   - Appui sur ENTER (ouvrir 'Créer une copie')")
-            actions.send_keys(Keys.ENTER)
-            actions.perform()
-            time.sleep(1.5)
+            for selector_type, selector_value in selectors_copie:
+                try:
+                    print(f"[DEBUG] Tentative Créer une copie avec: {selector_type} - {str(selector_value)[:60]}")
+                    copie_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    print(f"[OK] Bouton 'Créer une copie' trouve avec: {selector_type}")
+                    break
+                except Exception as e:
+                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                    continue
+
+            if not copie_button:
+                raise Exception("Impossible de trouver 'Créer une copie'")
+
+            copie_button.click()
+            time.sleep(2)
             print("[OK] Menu 'Créer une copie' ouvert")
 
-            # Étape 3 : Navigation vers "Télécharger une copie"
-            print("[INFO] Etape 3/3 : Navigation clavier vers 'Télécharger une copie'...")
-            print("[INFO]   - Appui sur TAB")
-            actions.send_keys(Keys.TAB)
-            actions.perform()
-            time.sleep(0.5)
+            # Étape 3 : Cliquer sur "Télécharger une copie"
+            print("[INFO] Etape 3/3 : Clic sur 'Télécharger une copie'...")
+            time.sleep(2)
 
-            print("[INFO]   - Appui sur ENTER (lancer téléchargement)")
-            actions.send_keys(Keys.ENTER)
-            actions.perform()
-            time.sleep(1)
+            download_button = None
+            # Sélecteurs pour "Télécharger une copie"
+            selectors_download = [
+                (By.XPATH, "//span[text()='Télécharger une copie']"),
+                (By.XPATH, "//span[text()='Download a copy']"),
+                (By.XPATH, "//span[contains(text(), 'Télécharger une copie')]"),
+                (By.XPATH, "//span[contains(text(), 'Download a copy')]"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Télécharger une copie']"),
+                (By.XPATH, "//span[contains(@class, 'fui-MenuItem__content') and text()='Download a copy']"),
+            ]
+
+            for selector_type, selector_value in selectors_download:
+                try:
+                    print(f"[DEBUG] Tentative Télécharger une copie avec: {selector_type} - {str(selector_value)[:60]}")
+                    download_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    print(f"[OK] Bouton 'Télécharger une copie' trouve avec: {selector_type}")
+                    break
+                except Exception as e:
+                    print(f"[DEBUG] Echec: {str(e)[:50]}")
+                    continue
+
+            if not download_button:
+                raise Exception("Impossible de trouver 'Télécharger une copie'")
+
+            download_button.click()
+            time.sleep(2)
             print("[OK] Telechargement XLSX lance!")
             download_clicked = True
 
