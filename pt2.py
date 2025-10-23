@@ -10,8 +10,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 # =============================================================================
 
 # Define your directories
-source_directory = r'C:\Users\Pierre\Desktop\FAC'
-destination_directory = r'C:\Users\Pierre\Desktop\FAC\Données transformé'
+source_directory = os.path.dirname(os.path.abspath(__file__))
+destination_directory = os.path.join(source_directory, 'Données transformé')
 os.makedirs(destination_directory, exist_ok=True)
 
 # Define files to convert with their sheet names
@@ -324,7 +324,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                 print(f"\n[LIST] Creating checklists...")
 
                 # Create checklist directory
-                checklist_dir = r'C:\Users\Pierre\Desktop\FAC\Checklist'
+                checklist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Checklist')
                 os.makedirs(checklist_dir, exist_ok=True)
 
                 # Checklist 1: Cindy - PEC accordé (from Réél column)
@@ -1100,7 +1100,7 @@ if __name__ == "__main__":
 
     # Step 4: Create visualizations
     print("\n[STEP 4] Creating visualizations...")
-    graph_directory = r'C:\Users\Pierre\Desktop\FAC\Graphiques'
+    graph_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Graphiques')
     create_payment_visualization(destination_directory, graph_directory)
     create_status_count_visualization(destination_directory, graph_directory)
     create_ca_visualization_by_vague(destination_directory, graph_directory)
@@ -1109,7 +1109,7 @@ if __name__ == "__main__":
 
     # Step 5: Convert checklist CSV to XLSX for email sending
     print("\n[STEP 5] Converting checklist CSV to XLSX for email...")
-    checklist_dir = r'C:\Users\Pierre\Desktop\FAC\Checklist'
+    checklist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Checklist')
     csv_files = glob.glob(os.path.join(checklist_dir, '*.csv'))
 
     for csv_file in csv_files:
