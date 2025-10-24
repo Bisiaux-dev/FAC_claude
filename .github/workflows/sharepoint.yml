@@ -33,6 +33,9 @@ jobs:
       env:
         HEADLESS: true
 
+    - name: Run data processing (pt2.py)
+      run: python pt2.py
+
     - name: Upload downloaded file
       if: always()
       uses: actions/upload-artifact@v4
@@ -53,3 +56,17 @@ jobs:
       with:
         name: screenshots
         path: "*.png"
+
+    - name: Upload processed data
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: processed-data
+        path: output/**/*
+
+    - name: Upload graphs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: graphs
+        path: output/Graphiques/*.png

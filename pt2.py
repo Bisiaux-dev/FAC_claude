@@ -9,9 +9,9 @@ warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 # CONFIGURATION
 # =============================================================================
 
-# Define your directories
-source_directory = r'C:\Users\Pierre\Desktop\FAC_originale'
-destination_directory = r'C:\Users\Pierre\Desktop\FAC_originale\Données transformé'
+# Define your directories (relative paths for cross-platform compatibility)
+source_directory = 'downloads'
+destination_directory = 'output/Données_transformé'
 os.makedirs(destination_directory, exist_ok=True)
 
 # Define files to convert with their sheet names
@@ -324,7 +324,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                 print(f"\n[LIST] Creating checklists...")
 
                 # Create checklist directory
-                checklist_dir = r'C:\Users\Pierre\Desktop\FAC_originale\Checklist'
+                checklist_dir = 'output/Checklist'
                 os.makedirs(checklist_dir, exist_ok=True)
 
                 # Checklist 1: Cindy - PEC accordé (from Réél column)
@@ -1100,16 +1100,16 @@ if __name__ == "__main__":
 
     # Step 4: Create visualizations
     print("\n[STEP 4] Creating visualizations...")
-    graph_directory = r'C:\Users\Pierre\Desktop\FAC_originale\Graphiques'
+    graph_directory = 'output/Graphiques'
     create_payment_visualization(destination_directory, graph_directory)
     create_status_count_visualization(destination_directory, graph_directory)
     create_ca_visualization_by_vague(destination_directory, graph_directory)
     create_intermediary_status_visualization(destination_directory, graph_directory)
     create_promo_visualization(destination_directory, graph_directory)
 
-    # Step 5: Convert checklist CSV to XLSX for email sending
-    print("\n[STEP 5] Converting checklist CSV to XLSX for email...")
-    checklist_dir = r'C:\Users\Pierre\Desktop\FAC_originale\Checklist'
+    # Step 5: Convert checklist CSV to XLSX
+    print("\n[STEP 5] Converting checklist CSV to XLSX...")
+    checklist_dir = 'output/Checklist'
     csv_files = glob.glob(os.path.join(checklist_dir, '*.csv'))
 
     for csv_file in csv_files:
