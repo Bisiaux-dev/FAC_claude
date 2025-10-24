@@ -41,7 +41,7 @@ class CRMReportSender:
         self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.report_path = os.path.join(self.base_dir, ATTACHMENT_CONFIG['report_filename'])
         self.backup_dir = os.path.join(self.base_dir, ADVANCED_CONFIG['backup_folder'])
-        self.checklist_dir = os.path.join(self.base_dir, 'Checklist')
+        self.checklist_dir = os.path.join(self.base_dir, 'output', 'Checklist')
 
     def get_checklist_stats_from_recap(self):
         """Récupère les statistiques depuis le fichier récapitulatif"""
