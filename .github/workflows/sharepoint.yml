@@ -36,6 +36,15 @@ jobs:
     - name: Run data processing (pt2.py)
       run: python pt2.py
 
+    - name: Generate PowerPoint report
+      run: python generate_powerpoint.py
+
+    - name: Send email report
+      run: python email_sender/send_report_safe.py
+      env:
+        SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
     - name: Upload downloaded file
       if: always()
       uses: actions/upload-artifact@v4
@@ -70,3 +79,10 @@ jobs:
       with:
         name: graphs
         path: output/Graphiques/*.png
+
+    - name: Upload PowerPoint report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: powerpoint-report
+        path: Rapport_PERSPECTIVIA.pptx

@@ -1,0 +1,397 @@
+#!/usr/bin/env python3
+"""
+WORKFLOW 2: Envoi AVEC PowerPoint aux 3 destinataires (Berfay, Markovski, Nicolas)
+Module d'envoi automatique du rapport avec noms de fichiers sans accents
+Version sécurisée pour éviter les problèmes d'encodage
+"""
+
+import smtplib
+import os
+import sys
+import zipfile
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from email.utils import formataddr
+import time
+import shutil
+import csv
+import unicodedata
+
+# Ajouter le dossier parent au path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# Override recipients for workflow 2 (with PowerPoint)
+WORKFLOW_2_RECIPIENTS = [
+    'bisiaux.pierre@outlook.fr',
+    'b.hunalp@rhreflex.com',
+    # 'markovski@rhreflex.com',
+    # 'nicolas@perspectivia.fr',
+]
+
+try:
+    from email_config.email_settings import *
+    # Override recipients
+    RECIPIENTS_CONFIG['to_emails'] = WORKFLOW_2_RECIPIENTS
+    # Enable PowerPoint attachment, DISABLE Excel checklists
+    ATTACHMENT_CONFIG['attach_report'] = True
+    ATTACHMENT_CONFIG['attach_checklists'] = False
+except ImportError:
+    print("❌ ERREUR: Configuration email non trouvée")
+    sys.exit(1)
+
+def remove_accents(text):
+    """Supprime les accents d'une chaîne"""
+    nfd = unicodedata.normalize('NFD', text)
+    return ''.join(c for c in nfd if not unicodedata.combining(c))
+
+class CRMReportSender:
+    """Gestionnaire d'envoi de rapport CRM"""
+
+    def __init__(self):
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.report_path = os.path.join(self.base_dir, ATTACHMENT_CONFIG['report_filename'])
+        self.backup_dir = os.path.join(self.base_dir, ADVANCED_CONFIG['backup_folder'])
+        self.checklist_dir = os.path.join(self.base_dir, 'Checklist')
+
+    def get_checklist_stats_from_recap(self):
+        """Récupère les statistiques depuis le fichier récapitulatif"""
+        recap_file = os.path.join(self.checklist_dir, 'checklist_recap.xlsx')
+
+        file_mapping = {
+            'checklist_équipe_commercial.xlsx': 'commercial_count',
+            'checklist_equipe_commercial.xlsx': 'commercial_count',
+            'checklist_admin_dépôt_initial.xlsx': 'admin_depot_count',
+            'checklist_admin_depot_initial.xlsx': 'admin_depot_count',
+            'checklist_admin_vérifier_dépôt.xlsx': 'admin_verif_count',
+            'checklist_admin_verifier_depot.xlsx': 'admin_verif_count',
+            'checklist_cindy.xlsx': 'cindy_count',
+            'checklist_facturation_en_retard.xlsx': 'facturation_retard_count',
+            'dépôt_que_le_client_doit_effectuer.csv': 'depot_client_count',
+            'depot_que_le_client_doit_effectuer.csv': 'depot_client_count',
+            'depot_que_le_client_doit_effectuer.xlsx': 'depot_client_count',
+            'tresorerie_en_retard.csv': 'tresorerie_count',
+            'tresorerie_en_retard.xlsx': 'tresorerie_count',
+        }
+
+        stats = {
+            'commercial_count': 0,
+            'admin_depot_count': 0,
+            'admin_verif_count': 0,
+            'cindy_count': 0,
+            'facturation_retard_count': 0,
+            'depot_client_count': 0,
+            'tresorerie_count': 0,
+        }
+
+        try:
+            import pandas as pd
+            df_recap = pd.read_excel(recap_file, engine='openpyxl')
+
+            for _, row in df_recap.iterrows():
+                if row['Fichier'] != 'TOTAL':
+                    filename = row['Fichier'].strip()
+                    try:
+                        count = int(row['Nombre de lignes'])
+                        count = max(0, count)  # Pas de -1, les données sont déjà correctes
+                        if filename in file_mapping:
+                            key = file_mapping[filename]
+                            stats[key] = max(stats[key], count)
+                    except (ValueError, KeyError):
+                        continue
+
+            stats['total_count'] = sum(stats.values())
+
+            print(f"STATS: Commercial: {stats['commercial_count']}")
+            print(f"STATS: Dépôt client: {stats['depot_client_count']}")
+            print(f"STATS: Admin dépôt initial: {stats['admin_depot_count']}")
+            print(f"STATS: Admin vérif dépôt: {stats['admin_verif_count']}")
+            print(f"STATS: Cindy (facturation): {stats['cindy_count']}")
+            print(f"STATS: Facturation en retard: {stats['facturation_retard_count']}")
+            print(f"STATS: Trésorerie en retard: {stats['tresorerie_count']}")
+            print(f"STATS: TOTAL: {stats['total_count']}")
+
+            return stats
+
+        except FileNotFoundError:
+            print(f"WARNING: Fichier recap non trouvé")
+            return self.get_checklist_stats_fallback()
+
+    def get_checklist_stats_fallback(self):
+        """Compte directement les lignes (fallback)"""
+        stats = {
+            'commercial_count': self.count_checklist_lines('checklist_equipe_commercial.xlsx'),
+            'depot_client_count': self.count_checklist_lines('depot_que_le_client_doit_effectuer.csv'),
+            'admin_depot_count': self.count_checklist_lines('checklist_admin_depot_initial.xlsx'),
+            'admin_verif_count': self.count_checklist_lines('checklist_admin_verifier_depot.xlsx'),
+            'cindy_count': self.count_checklist_lines('checklist_cindy.xlsx'),
+            'facturation_retard_count': self.count_checklist_lines('checklist_facturation_en_retard.xlsx'),
+            'tresorerie_count': self.count_checklist_lines('tresorerie_en_retard.csv'),
+        }
+        stats['total_count'] = sum(stats.values())
+        return stats
+
+    def count_checklist_lines(self, filename):
+        """Compte le nombre de lignes dans un fichier checklist"""
+        filepath = os.path.join(self.checklist_dir, filename)
+        try:
+            import pandas as pd
+            if filename.endswith('.csv'):
+                df = pd.read_csv(filepath, sep=';', encoding='utf-8-sig')
+            else:
+                df = pd.read_excel(filepath, engine='openpyxl')
+            return len(df)
+        except FileNotFoundError:
+            return 0
+        except Exception:
+            return 0
+
+    def get_checklist_stats(self):
+        """Récupère les statistiques"""
+        return self.get_checklist_stats_from_recap()
+
+    def validate_report_exists(self):
+        """Vérifie que le rapport existe"""
+        if not ATTACHMENT_CONFIG.get('attach_report', True):
+            print("INFO: Envoi sans rapport PowerPoint")
+            return True
+
+        if not os.path.exists(self.report_path):
+            print("INFO: Rapport PowerPoint non trouvé")
+            return True
+
+        return True
+
+    def create_message(self):
+        """Crée le message email pour Workflow 2 (PowerPoint uniquement)"""
+        msg = MIMEMultipart()
+
+        msg['From'] = formataddr((SENDER_CONFIG['from_name'], SENDER_CONFIG['from_email']))
+        msg['To'] = ', '.join(RECIPIENTS_CONFIG['to_emails'])
+
+        if RECIPIENTS_CONFIG['cc_emails']:
+            msg['Cc'] = ', '.join(RECIPIENTS_CONFIG['cc_emails'])
+
+        if SENDER_CONFIG['reply_to']:
+            msg['Reply-To'] = SENDER_CONFIG['reply_to']
+
+        # Subject spécifique pour le workflow 2
+        subject = f"Rapport PERSPECTIVIA - Présentation Management ({datetime.now().strftime('%Y-%m-%d')})"
+        msg['Subject'] = subject
+
+        generation_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
+        stats = self.get_checklist_stats()
+
+        # Email minimal - Seulement titre et pièce jointe
+        body_text = f'''Bonjour,
+
+Veuillez trouver ci-joint le rapport de présentation PERSPECTIVIA.
+
+Cordialement,
+Système d'automatisation PERSPECTIVIA
+'''
+
+        body_html = f'''<html>
+<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">
+    <p>Bonjour,</p>
+    <p>Veuillez trouver ci-joint le rapport de présentation PERSPECTIVIA.</p>
+    <p>Cordialement,<br>
+    Système d'automatisation PERSPECTIVIA</p>
+</body>
+</html>'''
+
+        msg_alternative = MIMEMultipart('alternative')
+        msg_alternative.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg_alternative.attach(MIMEText(body_html, 'html', 'utf-8'))
+        msg.attach(msg_alternative)
+
+        return msg
+
+    def attach_file_safe(self, msg, filepath, safe_filename=None):
+        """Attache un fichier avec un nom sans accents"""
+        try:
+            if not os.path.exists(filepath):
+                return False
+
+            original_filename = os.path.basename(filepath)
+
+            if safe_filename is None:
+                safe_filename = remove_accents(original_filename)
+
+            if safe_filename.lower().endswith('.csv'):
+                maintype = 'text'
+                subtype = 'csv'
+            elif safe_filename.lower().endswith('.xlsx'):
+                maintype = 'application'
+                subtype = 'vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            elif safe_filename.lower().endswith('.pptx'):
+                maintype = 'application'
+                subtype = 'vnd.openxmlformats-officedocument.presentationml.presentation'
+            else:
+                maintype = 'application'
+                subtype = 'octet-stream'
+
+            with open(filepath, "rb") as attachment:
+                part = MIMEBase(maintype, subtype)
+                part.set_payload(attachment.read())
+
+            encoders.encode_base64(part)
+
+            part.add_header(
+                'Content-Disposition',
+                f'attachment; filename="{safe_filename}"'
+            )
+
+            msg.attach(part)
+            print(f"  OK: {safe_filename} ({maintype}/{subtype})")
+            return True
+
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return False
+
+    def attach_report(self, msg):
+        """Attache le rapport PowerPoint"""
+        if not ATTACHMENT_CONFIG.get('attach_report', True):
+            return True
+
+        if not os.path.exists(self.report_path):
+            return True
+
+        return self.attach_file_safe(msg, self.report_path)
+
+    def attach_checklists(self, msg):
+        """Attache les fichiers checklist Excel"""
+        if not ATTACHMENT_CONFIG.get('attach_checklists', False):
+            return True
+
+        checklist_mapping = {
+            'checklist_equipe_commercial.xlsx': 'checklist_equipe_commercial.xlsx',
+            'dépôt_que_le_client_doit_effectuer.xlsx': 'depot_que_le_client_doit_effectuer.xlsx',
+            'checklist_admin_depot_initial.xlsx': 'checklist_admin_depot_initial.xlsx',
+            'checklist_admin_verifier_depot.xlsx': 'checklist_admin_verifier_depot.xlsx',
+            'checklist_cindy.xlsx': 'checklist_cindy.xlsx',
+            'checklist_facturation_en_retard.xlsx': 'checklist_facturation_en_retard.xlsx',
+            'tresorerie_en_retard.xlsx': 'tresorerie_en_retard.xlsx',
+            'checklist_recap.xlsx': 'checklist_recap.xlsx'
+        }
+
+        attached = 0
+        for original_name, safe_name in checklist_mapping.items():
+            filepath = os.path.join(self.checklist_dir, original_name)
+            if self.attach_file_safe(msg, filepath, safe_name):
+                attached += 1
+
+        print(f"INFO: {attached}/{len(checklist_mapping)} checklists attachés")
+        return True
+
+    def send_email(self, msg):
+        """Envoie l'email"""
+        for attempt in range(ADVANCED_CONFIG['retry_attempts']):
+            try:
+                print(f"SENDING: Tentative {attempt + 1}/{ADVANCED_CONFIG['retry_attempts']}...")
+
+                server = smtplib.SMTP(SMTP_CONFIG['smtp_server'], SMTP_CONFIG['smtp_port'])
+
+                if SMTP_CONFIG['use_tls']:
+                    server.starttls()
+
+                server.login(SMTP_CONFIG['username'], SMTP_CONFIG['password'])
+
+                all_recipients = RECIPIENTS_CONFIG['to_emails'][:]
+                if RECIPIENTS_CONFIG['cc_emails']:
+                    all_recipients.extend(RECIPIENTS_CONFIG['cc_emails'])
+                if RECIPIENTS_CONFIG['bcc_emails']:
+                    all_recipients.extend(RECIPIENTS_CONFIG['bcc_emails'])
+
+                server.send_message(msg, to_addrs=all_recipients)
+                server.quit()
+
+                print("SUCCESS: Email envoyé avec succès!")
+                return True
+
+            except Exception as e:
+                print(f"ERROR: {e}")
+                if attempt < ADVANCED_CONFIG['retry_attempts'] - 1:
+                    time.sleep(ADVANCED_CONFIG['retry_delay_seconds'])
+
+        return False
+
+    def backup_report(self):
+        """Sauvegarde le rapport"""
+        if not ADVANCED_CONFIG['backup_sent_reports']:
+            return
+
+        try:
+            if not os.path.exists(self.backup_dir):
+                os.makedirs(self.backup_dir)
+
+            if os.path.exists(self.report_path):
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = os.path.basename(self.report_path)
+                name, ext = os.path.splitext(filename)
+                backup_filename = f"{name}_{timestamp}{ext}"
+                backup_path = os.path.join(self.backup_dir, backup_filename)
+
+                shutil.copy2(self.report_path, backup_path)
+                print(f"BACKUP: Rapport sauvegardé: {backup_filename}")
+
+        except Exception:
+            pass
+
+    def cleanup(self):
+        """Nettoie les fichiers temporaires"""
+        pass
+
+    def send_report(self):
+        """Fonction principale"""
+        print("=" * 70)
+        print("WORKFLOW 2: EMAIL AVEC POWERPOINT UNIQUEMENT")
+        print("Destinataires: 3 personnes (Berfay, Markovski, Nicolas)")
+        print("Pièce jointe: 1 fichier PowerPoint")
+        print("=" * 70)
+
+        config_errors = validate_config()
+        if config_errors:
+            print("❌ ERREURS DE CONFIGURATION:")
+            for error in config_errors:
+                print(f"   • {error}")
+            return False
+
+        if not self.validate_report_exists():
+            return False
+
+        print("EMAIL: Création du message email...")
+        msg = self.create_message()
+
+        print("INFO: Attachment PowerPoint uniquement (checklists Excel désactivés)")
+        if not self.attach_report(msg):
+            print("WARNING: Erreur rapport PowerPoint")
+        else:
+            print("  OK: Rapport_PERSPECTIVIA.pptx")
+
+        # Checklists sont désactivés dans ce workflow
+        # if not self.attach_checklists(msg):
+        #     print("WARNING: Erreur checklists")
+
+        success = self.send_email(msg)
+
+        if success:
+            self.backup_report()
+            self.cleanup()
+            print("SUCCESS: Envoi terminé avec succès!")
+            return True
+        else:
+            print("FAILED: Échec de l'envoi")
+            return False
+
+def main():
+    """Point d'entrée principal"""
+    sender = CRMReportSender()
+    success = sender.send_report()
+    sys.exit(0 if success else 1)
+
+if __name__ == "__main__":
+    main()
