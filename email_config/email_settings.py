@@ -27,6 +27,8 @@ RECIPIENTS_CONFIG = {
     'to_emails': [
         'bisiaux.pierre@outlook.fr',
         'b.hunalp@rhreflex.com',
+        'cendrine@isim.fr',
+        'selenay@isim.fr',
         # 'C.romeo@planBgroupe.com',
         # 'aumarin@rhreflex.com',
         # 'nicolas@perspectivia.fr',
