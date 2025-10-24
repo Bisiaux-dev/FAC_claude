@@ -169,16 +169,20 @@ def download_sharepoint_file():
         downloaded_file = wait_for_download(DOWNLOAD_DIR, timeout=60)
 
         if downloaded_file:
-            # Rename file to target filename
+            # Rename file to target filename (only if not already named correctly)
             target_path = DOWNLOAD_DIR / TARGET_FILENAME
-            if target_path.exists():
-                target_path.unlink()
 
-            downloaded_file.rename(target_path)
-            logger.info(f"File renamed to: {TARGET_FILENAME}")
+            if downloaded_file.name != TARGET_FILENAME:
+                if target_path.exists():
+                    target_path.unlink()
+                downloaded_file.rename(target_path)
+                logger.info(f"File renamed to: {TARGET_FILENAME}")
+            else:
+                logger.info(f"File already has correct name: {TARGET_FILENAME}")
 
-            # Verify file exists and has content
-            file_size = target_path.stat().st_size
+            # Verify file exists and has content (use downloaded_file if not renamed)
+            final_file = target_path if target_path.exists() else downloaded_file
+            file_size = final_file.stat().st_size
             logger.info(f"Download successful! File size: {file_size:,} bytes")
 
             if file_size < 1000:
