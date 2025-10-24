@@ -1,0 +1,88 @@
+name: SharePoint XLSX Automation (With PowerPoint)
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Tous les lundis à 8h UTC
+  workflow_dispatch:  # Permet lancement manuel
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install Chrome and ChromeDriver
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser chromium-chromedriver
+
+    - name: Run SharePoint scraper
+      run: python scraper.py
+      env:
+        HEADLESS: true
+
+    - name: Run data processing (pt2.py)
+      run: python pt2.py
+
+    - name: Generate PowerPoint report
+      run: python generate_powerpoint.py
+
+    - name: Send email report with PowerPoint
+      run: python email_sender/send_report_with_ppt.py
+      env:
+        SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+    - name: Upload downloaded file
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: downloaded-xlsx
+        path: downloads/*.xlsx
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs
+        path: "*.log"
+
+    - name: Upload screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots
+        path: "*.png"
+
+    - name: Upload processed data
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: processed-data
+        path: output/**/*
+
+    - name: Upload graphs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: graphs
+        path: output/Graphiques/*.png
+
+    - name: Upload PowerPoint report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: powerpoint-report
+        path: Rapport_PERSPECTIVIA.pptx
