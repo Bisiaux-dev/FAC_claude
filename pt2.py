@@ -70,10 +70,10 @@ def convert_xlsx_to_csv(files_dict, source_dir, dest_dir, encoding='utf_8_sig'):
             df_clean.to_csv(output_file_path, index=False, encoding=encoding, sep=';')
 
             converted_files.append(output_file_path)
-            print(f"[OK] Converted: {file} → {csv_file_name}")
+            print(f"✓ Converted: {file} → {csv_file_name}")
 
         except Exception as e:
-            print(f"[ERREUR] Error processing {file}: {e}")
+            print(f"✗ Error processing {file}: {e}")
 
     return converted_files
 
@@ -95,19 +95,19 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
 
             # Check if required columns exist
             if vague_column not in df.columns:
-                print(f"[WARN] Warning: '{vague_column}' column not found in {csv_file}")
+                print(f"⚠ Warning: '{vague_column}' column not found in {csv_file}")
                 continue
 
             if etat_column not in df.columns:
-                print(f"[WARN] Warning: '{etat_column}' column not found in {csv_file}")
+                print(f"⚠ Warning: '{etat_column}' column not found in {csv_file}")
                 # Continue anyway if État is missing
 
-            # Check for payment columns - USE PAIEMENT COLUMNS (OPTION A)
+            # Check for payment columns
             payment_columns = ['PAIEMENT 1', 'PAIEMENT 2', 'PAIEMENT 3']
             available_payments = [col for col in payment_columns if col in df.columns]
 
             if not available_payments:
-                print(f"[WARN] Warning: No payment columns found in {csv_file}")
+                print(f"⚠ Warning: No payment columns found in {csv_file}")
 
             # Get base filename
             base_name = os.path.basename(csv_file).replace('.csv', '')
@@ -115,7 +115,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
             # Get unique vagues (cycles)
             unique_vagues = df[vague_column].dropna().unique()
 
-            print(f"\n[GRAPH] Processing: {base_name}")
+            print(f"\n📊 Processing: {base_name}")
             print(f"   Found {len(unique_vagues)} unique vagues/cycles")
 
             # Create a CSV for each vague
@@ -134,10 +134,10 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                 # Show summary
                 if etat_column in df.columns:
                     etat_counts = df_vague[etat_column].value_counts()
-                    print(f"   [OK] Vague '{vague}': {len(df_vague)} rows")
+                    print(f"   ✓ Vague '{vague}': {len(df_vague)} rows")
                     print(f"      États: {dict(etat_counts)}")
                 else:
-                    print(f"   [OK] Vague '{vague}': {len(df_vague)} rows")
+                    print(f"   ✓ Vague '{vague}': {len(df_vague)} rows")
 
             # Define detailed status categories
             status_categories = {
@@ -227,7 +227,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                 # RENAMED: Save as "Données_Transformées" instead of "Summary_Vague_État"
                 summary_path = os.path.join(dest_dir, f"Données_Transformées.csv")
                 summary.to_csv(summary_path, index=False, encoding='utf_8_sig', sep=';')
-                print(f"   [OK] Created summary: Données_Transformées.csv")
+                print(f"   ✓ Created summary: Données_Transformées.csv")
 
                 # Create Intermediary Status CSV - only detailed status columns with values > 0
                 intermediary_columns = ['Vague', 'ÉTAT', 'Count']
@@ -248,7 +248,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                 # Save intermediary status CSV
                 intermediary_path = os.path.join(dest_dir, f"Statuts_Intermédiaires.csv")
                 intermediary_df_filtered.to_csv(intermediary_path, index=False, encoding='utf_8_sig', sep=';')
-                print(f"   [OK] Created intermediary status file: Statuts_Intermédiaires.csv")
+                print(f"   ✓ Created intermediary status file: Statuts_Intermédiaires.csv")
 
                 # Create PROMO breakdown CSV - only Réél category with PROMO counts
                 promo_data = []
@@ -279,10 +279,10 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                     promo_df = pd.DataFrame(promo_data)
                     promo_path = os.path.join(dest_dir, f"PROMO_Réél_par_Vague.csv")
                     promo_df.to_csv(promo_path, index=False, encoding='utf_8_sig', sep=';')
-                    print(f"   [OK] Created PROMO breakdown file (Réél only): PROMO_Réél_par_Vague.csv")
+                    print(f"   ✓ Created PROMO breakdown file (Réél only): PROMO_Réél_par_Vague.csv")
 
                     # Display PROMO summary
-                    print(f"\n[PROMO] PROMO Summary (Réél):")
+                    print(f"\n📚 PROMO Summary (Réél):")
                     for vague in unique_vagues:
                         df_vague_promo = promo_df[promo_df['Vague'] == vague]
                         total = df_vague_promo['Count'].sum()
@@ -292,14 +292,14 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                             for _, row in promos.iterrows():
                                 print(f"  - {row['PROMO']}: {row['Count']}")
                 else:
-                    print(f"   [WARN] Warning: No PROMO data found or PROMO column missing")
+                    print(f"   ⚠ Warning: No PROMO data found or PROMO column missing")
 
                 # Display summary table
-                print(f"\n[DATA] Payment Summary by Vague and État:")
+                print(f"\n📈 Payment Summary by Vague and État:")
                 print(summary.to_string(index=False))
 
                 # Display CA summary
-                print(f"\n[CA] CA Summary:")
+                print(f"\n💰 CA Summary:")
                 print(f"Total CA Réél: {summary['CA_Réél'].sum():,.2f}€")
                 print(f"Total CA Prévisionnel: {summary['CA_Prévisionnel'].sum():,.2f}€")
                 print(f"Total CA Potentiel: {summary['CA_Potentiel'].sum():,.2f}€")
@@ -313,15 +313,15 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                     if not state_data.empty and 'Total_All_Payments' in state_data.columns:
                         total = state_data['Total_All_Payments'].sum()
                         if total > 0:
-                            print(f"\n[WARN] WARNING: Found {total}€ in payments for '{state}' (expected 0)")
+                            print(f"\n⚠️  WARNING: Found {total}€ in payments for '{state}' (expected 0)")
                         else:
-                            print(f"\n[OK] Confirmed: No payments for '{state}' (as expected)")
+                            print(f"\n✓ Confirmed: No payments for '{state}' (as expected)")
 
                 # =============================================================================
                 # CREATE CHECKLISTS
                 # =============================================================================
 
-                print(f"\n[LIST] Creating checklists...")
+                print(f"\n📋 Creating checklists...")
 
                 # Create checklist directory
                 checklist_dir = 'output/Checklist'
@@ -333,9 +333,9 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                     if not df_cindy.empty:
                         cindy_path = os.path.join(checklist_dir, 'checklist_cindy.csv')
                         df_cindy.to_csv(cindy_path, index=False, encoding='utf_8_sig', sep=';')
-                        print(f"   [OK] Checklist Cindy: {len(df_cindy)} formations (PEC accordé)")
+                        print(f"   ✓ Checklist Cindy: {len(df_cindy)} formations (PEC accordé)")
                     else:
-                        print(f"   [WARN] No formations found with 'PEC accordé' status")
+                        print(f"   ⚠ No formations found with 'PEC accordé' status")
 
                 # Checklist 2: Admin dépôt initial - Signature bi-parti à déposer (from Potentiel column)
                 if 'Potentiel' in df.columns:
@@ -344,9 +344,9 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         depot_initial_path = os.path.join(checklist_dir, 'checklist_admin_dépôt_initial.csv')
                         df_depot_initial.to_csv(depot_initial_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Admin Dépôt Initial: {len(df_depot_initial)} formations (Signature bi-parti à déposer)")
+                            f"   ✓ Checklist Admin Dépôt Initial: {len(df_depot_initial)} formations (Signature bi-parti à déposer)")
                     else:
-                        print(f"   [WARN] No formations found with 'Signature bi-parti à déposer' status")
+                        print(f"   ⚠ No formations found with 'Signature bi-parti à déposer' status")
 
                 # Checklist 3: Admin vérifier dépôt - Dépôt brouillon (from Potentiel column)
                 if 'Potentiel' in df.columns:
@@ -355,9 +355,9 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         verifier_depot_path = os.path.join(checklist_dir, 'checklist_admin_vérifier_dépôt.csv')
                         df_verifier_depot.to_csv(verifier_depot_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Admin Vérifier Dépôt: {len(df_verifier_depot)} formations (Dépôt brouillon)")
+                            f"   ✓ Checklist Admin Vérifier Dépôt: {len(df_verifier_depot)} formations (Dépôt brouillon)")
                     else:
-                        print(f"   [WARN] No formations found with 'Dépôt brouillon' status")
+                        print(f"   ⚠ No formations found with 'Dépôt brouillon' status")
 
                 # Checklist 4: Équipe commercial - Manque signatures (from Potentiel column)
                 if 'Potentiel' in df.columns:
@@ -366,9 +366,9 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         manque_signatures_path = os.path.join(checklist_dir, 'checklist_équipe_commercial.csv')
                         df_manque_signatures.to_csv(manque_signatures_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Équipe Commercial: {len(df_manque_signatures)} formations (Manque signatures)")
+                            f"   ✓ Checklist Équipe Commercial: {len(df_manque_signatures)} formations (Manque signatures)")
                     else:
-                        print(f"   [WARN] No formations found with 'Manque signatures' status")
+                        print(f"   ⚠ No formations found with 'Manque signatures' status")
 
                 # Checklist 5: Dépôt que le client doit effectuer - Dépôt irréalisable faute de mandat (from Potentiel column)
                 if 'Potentiel' in df.columns:
@@ -377,9 +377,9 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         depot_client_path = os.path.join(checklist_dir, 'dépôt_que_le_client_doit_effectuer.csv')
                         df_depot_client.to_csv(depot_client_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Dépôt Client: {len(df_depot_client)} formations (Dépôt irréalisable faute de mandat)")
+                            f"   ✓ Checklist Dépôt Client: {len(df_depot_client)} formations (Dépôt irréalisable faute de mandat)")
                     else:
-                        print(f"   [WARN] No formations found with 'Dépôt irréalisable faute de mandat' status")
+                        print(f"   ⚠ No formations found with 'Dépôt irréalisable faute de mandat' status")
 
                 # Checklist 6: Prochaine facturation - Facturations en retard
                 if 'Prochaine facturation' in df.columns:
@@ -401,13 +401,13 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         facturation_retard_path = os.path.join(checklist_dir, 'checklist_facturation_en_retard.csv')
                         df_facturation_retard.to_csv(facturation_retard_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Facturation en Retard: {len(df_facturation_retard)} formations (Date de facturation dépassée)")
+                            f"   ✓ Checklist Facturation en Retard: {len(df_facturation_retard)} formations (Date de facturation dépassée)")
 
                         # Show some details
                         oldest_date = df_facturation_retard['Prochaine facturation'].min()
                         print(f"      Date la plus ancienne: {oldest_date.strftime('%Y-%m-%d')}")
                     else:
-                        print(f"   [OK] No overdue invoices - all up to date!")
+                        print(f"   ✓ No overdue invoices - all up to date!")
 
                 # Checklist 7: Trésorerie en retard - Facturé depuis plus de 2 mois
                 if 'Réél' in df.columns and 'DATE DE DEBUT FORMATION' in df.columns:
@@ -433,13 +433,13 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         tresorerie_retard_path = os.path.join(checklist_dir, 'tresorerie_en_retard.csv')
                         df_tresorerie_retard.to_csv(tresorerie_retard_path, index=False, encoding='utf_8_sig', sep=';')
                         print(
-                            f"   [OK] Checklist Trésorerie en Retard: {len(df_tresorerie_retard)} formations (Facturé depuis plus de 2 mois)")
+                            f"   ✓ Checklist Trésorerie en Retard: {len(df_tresorerie_retard)} formations (Facturé depuis plus de 2 mois)")
 
                         # Show some details
                         oldest_date = df_tresorerie_retard['DATE DE DEBUT FORMATION'].min()
                         print(f"      Date de début la plus ancienne: {oldest_date.strftime('%Y-%m-%d')}")
                     else:
-                        print(f"   [OK] No overdue treasury items - all up to date!")
+                        print(f"   ✓ No overdue treasury items - all up to date!")
 
                 # =============================================================================
                 # CREATE CHECKLIST RECAP
@@ -472,7 +472,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                             })
 
                         except Exception as e:
-                            print(f"   [WARN] Error reading {os.path.basename(checklist_file)}: {e}")
+                            print(f"   ⚠ Error reading {os.path.basename(checklist_file)}: {e}")
 
                     # Create recap DataFrame
                     if recap_data:
@@ -492,8 +492,8 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                         recap_path = os.path.join(checklist_dir, 'checklist_recap.csv')
                         df_recap.to_csv(recap_path, index=False, encoding='utf_8_sig', sep=';')
 
-                        print(f"   [OK] Checklist recap created: {len(checklist_files)} checklists analyzed")
-                        print(f"   [OK] Total formations across all checklists: {df_recap['Nombre de lignes'].iloc[-1]}")
+                        print(f"   ✓ Checklist recap created: {len(checklist_files)} checklists analyzed")
+                        print(f"   ✓ Total formations across all checklists: {df_recap['Nombre de lignes'].iloc[-1]}")
 
                         # Display recap
                         print(f"\n   Recap:")
@@ -501,7 +501,7 @@ def segment_by_vague(csv_files, dest_dir, vague_column='Vague', etat_column='ÉT
                             print(f"   {row['Fichier']}: {int(row['Nombre de lignes'])} ligne(s)")
 
         except Exception as e:
-            print(f"[ERREUR] Error segmenting {csv_file}: {e}")
+            print(f"✗ Error segmenting {csv_file}: {e}")
             import traceback
             traceback.print_exc()
 
@@ -521,7 +521,7 @@ def create_payment_visualization(dest_dir, graph_dir):
         # Read the transformed data
         summary_path = os.path.join(dest_dir, 'Données_Transformées.csv')
         if not os.path.exists(summary_path):
-            print("[WARN] Warning: Données_Transformées.csv not found. Skipping visualization.")
+            print("⚠ Warning: Données_Transformées.csv not found. Skipping visualization.")
             return
 
         df_summary = pd.read_csv(summary_path, encoding='utf_8_sig', sep=';')
@@ -533,7 +533,7 @@ def create_payment_visualization(dest_dir, graph_dir):
         df_reel = df_summary[df_summary['ÉTAT'].isin(['Réel', 'Réél'])].copy()
 
         if df_reel.empty:
-            print("[WARN] Warning: No 'Réel' or 'Réél' data found for visualization.")
+            print("⚠ Warning: No 'Réel' or 'Réél' data found for visualization.")
             return
 
         # Get unique vagues
@@ -612,10 +612,10 @@ def create_payment_visualization(dest_dir, graph_dir):
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-        print(f"\n[GRAPH] Visualization created: {output_path}")
+        print(f"\n📊 Visualization created: {output_path}")
 
     except Exception as e:
-        print(f"[ERREUR] Error creating visualization: {e}")
+        print(f"✗ Error creating visualization: {e}")
         import traceback
         traceback.print_exc()
 
@@ -631,7 +631,7 @@ def create_status_count_visualization(dest_dir, graph_dir):
         # Read the transformed data
         summary_path = os.path.join(dest_dir, 'Données_Transformées.csv')
         if not os.path.exists(summary_path):
-            print("[WARN] Warning: Données_Transformées.csv not found. Skipping visualization.")
+            print("⚠ Warning: Données_Transformées.csv not found. Skipping visualization.")
             return
 
         df_summary = pd.read_csv(summary_path, encoding='utf_8_sig', sep=';')
@@ -710,7 +710,7 @@ def create_status_count_visualization(dest_dir, graph_dir):
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-        print(f"[GRAPH] Status visualization created: {output_path}")
+        print(f"📊 Status visualization created: {output_path}")
 
         # Print summary table
         print("\n[LIST] Summary Table:")
@@ -726,7 +726,7 @@ def create_status_count_visualization(dest_dir, graph_dir):
             f"{'TOTAL':<12} {int(pivot_data[:, 0].sum()):<12} {int(pivot_data[:, 1].sum()):<15} {int(pivot_data[:, 2].sum()):<12} {int(pivot_data.sum()):<10}")
 
     except Exception as e:
-        print(f"[ERREUR] Error creating status visualization: {e}")
+        print(f"✗ Error creating status visualization: {e}")
         import traceback
         traceback.print_exc()
 
@@ -743,7 +743,7 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
         # Read the transformed data
         summary_path = os.path.join(dest_dir, 'Données_Transformées.csv')
         if not os.path.exists(summary_path):
-            print("[WARN] Warning: Données_Transformées.csv not found. Skipping visualization.")
+            print("⚠ Warning: Données_Transformées.csv not found. Skipping visualization.")
             return
 
         df_summary = pd.read_csv(summary_path, encoding='utf_8_sig', sep=';')
@@ -831,10 +831,10 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-        print(f"[GRAPH] CA visualization created: {output_path}")
+        print(f"📊 CA visualization created: {output_path}")
 
     except Exception as e:
-        print(f"[ERREUR] Error creating CA visualization: {e}")
+        print(f"✗ Error creating CA visualization: {e}")
         import traceback
         traceback.print_exc()
 
@@ -850,7 +850,7 @@ def create_intermediary_status_visualization(dest_dir, graph_dir):
         # Read the intermediary status data
         intermediary_path = os.path.join(dest_dir, 'Statuts_Intermédiaires.csv')
         if not os.path.exists(intermediary_path):
-            print("[WARN] Warning: Statuts_Intermédiaires.csv not found. Skipping visualization.")
+            print("⚠ Warning: Statuts_Intermédiaires.csv not found. Skipping visualization.")
             return
 
         df_inter = pd.read_csv(intermediary_path, encoding='utf_8_sig', sep=';')
@@ -948,10 +948,10 @@ def create_intermediary_status_visualization(dest_dir, graph_dir):
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
             plt.close()
 
-            print(f"[GRAPH] Intermediary status visualization created for {category}: {output_path}")
+            print(f"📊 Intermediary status visualization created for {category}: {output_path}")
 
     except Exception as e:
-        print(f"[ERREUR] Error creating intermediary status visualization: {e}")
+        print(f"✗ Error creating intermediary status visualization: {e}")
         import traceback
         traceback.print_exc()
 
@@ -967,7 +967,7 @@ def create_promo_visualization(dest_dir, graph_dir):
         # Read the PROMO data
         promo_path = os.path.join(dest_dir, 'PROMO_Réél_par_Vague.csv')
         if not os.path.exists(promo_path):
-            print("[WARN] Warning: PROMO_Réél_par_Vague.csv not found. Skipping visualization.")
+            print("⚠ Warning: PROMO_Réél_par_Vague.csv not found. Skipping visualization.")
             return
 
         df_promo = pd.read_csv(promo_path, encoding='utf_8_sig', sep=';')
@@ -1069,10 +1069,10 @@ def create_promo_visualization(dest_dir, graph_dir):
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-        print(f"[GRAPH] PROMO visualization created: {output_path}")
+        print(f"📊 PROMO visualization created: {output_path}")
 
     except Exception as e:
-        print(f"[ERREUR] Error creating PROMO visualization: {e}")
+        print(f"✗ Error creating PROMO visualization: {e}")
         import traceback
         traceback.print_exc()
 
