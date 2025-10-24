@@ -21,7 +21,7 @@ if sys.platform == 'win32':
 
 # Utiliser des chemins relatifs au script
 base_directory = os.path.dirname(os.path.abspath(__file__))
-graph_directory = os.path.join(base_directory, 'Graphiques')
+graph_directory = os.path.join(base_directory, 'output', 'Graphiques')
 output_directory = base_directory
 output_filename = 'Rapport_PERSPECTIVIA.pptx'
 
