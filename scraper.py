@@ -78,6 +78,9 @@ def setup_chrome_driver():
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
 
+    # Specify chromium binary location for GitHub Actions
+    options.binary_location = "/usr/bin/chromium-browser"
+
     driver = webdriver.Chrome(options=options)
 
     # Mask WebDriver
