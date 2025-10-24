@@ -27,8 +27,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 WORKFLOW_2_RECIPIENTS = [
     'bisiaux.pierre@outlook.fr',
     'b.hunalp@rhreflex.com',
-    # 'markovski@rhreflex.com',
-    # 'nicolas@perspectivia.fr',
+    'markovski@rhreflex.com',
+    'nicolas@perspectivia.fr',
 ]
 
 try:
