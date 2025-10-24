@@ -154,13 +154,43 @@ def download_sharepoint_file():
         # Setup driver
         driver = setup_chrome_driver()
 
-        # Navigate to SharePoint URL
-        logger.info(f"Navigating to SharePoint URL...")
-        driver.get(SHAREPOINT_URL)
+        # Try direct download approach first - modify URL to trigger download
+        logger.info("Attempting direct download approach...")
+        download_url = SHAREPOINT_URL.replace("?rtime=", "?download=1&rtime=")
 
-        # Wait for page load
+        logger.info(f"Navigating to SharePoint download URL...")
+        driver.get(download_url)
+
+        # Wait for download to initiate
+        time.sleep(10)
+        capture_screenshot(driver, "01_download_initiated")
+
+        # Check if download started
+        downloaded_file = wait_for_download(DOWNLOAD_DIR, timeout=60)
+
+        if downloaded_file:
+            # Rename file to target filename
+            target_path = DOWNLOAD_DIR / TARGET_FILENAME
+            if target_path.exists():
+                target_path.unlink()
+
+            downloaded_file.rename(target_path)
+            logger.info(f"File renamed to: {TARGET_FILENAME}")
+
+            # Verify file exists and has content
+            file_size = target_path.stat().st_size
+            logger.info(f"Download successful! File size: {file_size:,} bytes")
+
+            if file_size < 1000:
+                raise Exception(f"Downloaded file seems too small ({file_size} bytes)")
+
+            return True
+
+        # If direct download failed, try the navigation approach
+        logger.info("Direct download failed, trying navigation approach...")
+        driver.get(SHAREPOINT_URL)
         time.sleep(5)
-        capture_screenshot(driver, "01_initial_load")
+        capture_screenshot(driver, "02_initial_load")
 
         # Wait for and click "Fichier" button
         logger.info("Looking for 'Fichier' button...")
