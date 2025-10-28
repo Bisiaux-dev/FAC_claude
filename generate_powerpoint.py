@@ -9,6 +9,7 @@ import sys
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
+from pptx.dml.color import RGBColor
 import glob
 
 # Fix console encoding for Windows
@@ -137,6 +138,58 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             try:
                 pic = slide.shapes.add_picture(graph_file, img_left, img_top, width=img_width)
                 print(f"   ✓ Added slide: {slide_title}")
+
+                # Add text annotations for CA graph
+                if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
+                    # Add three text boxes on the right side
+                    text_left = Inches(7.2)
+                    text_width = Inches(2.5)
+                    text_height = Inches(1.0)
+
+                    # Potentiel annotation
+                    txBox1 = slide.shapes.add_textbox(text_left, Inches(2.5), text_width, text_height)
+                    tf1 = txBox1.text_frame
+                    tf1.text = "Potentiel : lister les statuts=> Trésorerie incertain, prévoir 50% de pertes"
+                    tf1.word_wrap = True
+                    p1 = tf1.paragraphs[0]
+                    p1.font.size = Pt(10)
+                    p1.font.name = 'Calibri'
+                    # Add border
+                    txBox1.line.color.rgb = RGBColor(0, 0, 0)
+                    txBox1.line.width = Pt(1)
+                    txBox1.fill.solid()
+                    txBox1.fill.fore_color.rgb = RGBColor(255, 255, 255)
+
+                    # Prévisionnel annotation
+                    txBox2 = slide.shapes.add_textbox(text_left, Inches(3.7), text_width, text_height)
+                    tf2 = txBox2.text_frame
+                    tf2.text = "Prévisionnel : attente de prise en charge=> Trésorerie prévisonnel a court terme"
+                    tf2.word_wrap = True
+                    p2 = tf2.paragraphs[0]
+                    p2.font.size = Pt(10)
+                    p2.font.name = 'Calibri'
+                    # Add border
+                    txBox2.line.color.rgb = RGBColor(0, 0, 0)
+                    txBox2.line.width = Pt(1)
+                    txBox2.fill.solid()
+                    txBox2.fill.fore_color.rgb = RGBColor(255, 255, 255)
+
+                    # Réél annotation
+                    txBox3 = slide.shapes.add_textbox(text_left, Inches(4.9), text_width, text_height)
+                    tf3 = txBox3.text_frame
+                    tf3.text = "Réél : lister les catégories=> Trésorerie certain à court terme"
+                    tf3.word_wrap = True
+                    p3 = tf3.paragraphs[0]
+                    p3.font.size = Pt(10)
+                    p3.font.name = 'Calibri'
+                    # Add border
+                    txBox3.line.color.rgb = RGBColor(0, 0, 0)
+                    txBox3.line.width = Pt(1)
+                    txBox3.fill.solid()
+                    txBox3.fill.fore_color.rgb = RGBColor(255, 255, 255)
+
+                    print(f"   ✓ Added text annotations for CA graph")
+
             except Exception as e:
                 print(f"   ✗ ERROR adding image {graph_filename}: {e}")
 
