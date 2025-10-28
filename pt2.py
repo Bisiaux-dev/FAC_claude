@@ -769,7 +769,7 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
         ca_data = np.array(ca_data)
 
         # Create the plot with more width for annotations
-        fig, ax = plt.subplots(figsize=(14, 8))
+        fig, ax = plt.subplots(figsize=(16, 8))
 
         # Set the width of bars and positions
         x = np.arange(len(categories))
@@ -807,27 +807,30 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
         ax.legend(title='Cycles', fontsize=11, title_fontsize=12, loc='upper left')
         ax.grid(axis='y', alpha=0.3, linestyle='--')
 
-        # Add explanatory text annotations on the right side
-        annotation_x = 0.76  # Position on the right side
-        annotation_y_start = 0.65
-        line_spacing = 0.13
+        # Adjust subplot to make room for annotations on the right
+        plt.subplots_adjust(right=0.72)
+
+        # Add explanatory text annotations on the right side (in figure coordinates)
+        annotation_x = 0.75  # Position on the right side
+        annotation_y_start = 0.68
+        line_spacing = 0.16
 
         # Potentiel explanation
         fig.text(annotation_x, annotation_y_start,
                 'Potentiel : lister les\nstatuts=> Trésorerie\nincertain,\nprévoir 50% de pertes',
-                fontsize=10, verticalalignment='top',
+                fontsize=9, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Prévisionnel explanation
         fig.text(annotation_x, annotation_y_start - line_spacing,
                 'Prévisionnel : attente de\nprise en\ncharge=> Trésorerie\nprévisonnel a court terme',
-                fontsize=10, verticalalignment='top',
+                fontsize=9, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Réél explanation
         fig.text(annotation_x, annotation_y_start - 2 * line_spacing,
                 'Réél : lister les\ncatégories=> Trésorerie\ncertain à court terme',
-                fontsize=10, verticalalignment='top',
+                fontsize=9, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Format y-axis to show currency
