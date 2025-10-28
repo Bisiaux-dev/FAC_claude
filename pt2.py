@@ -768,8 +768,8 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
 
         ca_data = np.array(ca_data)
 
-        # Create the plot
-        fig, ax = plt.subplots(figsize=(12, 8))
+        # Create the plot with more width for annotations
+        fig, ax = plt.subplots(figsize=(14, 8))
 
         # Set the width of bars and positions
         x = np.arange(len(categories))
@@ -806,6 +806,29 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
 
         ax.legend(title='Cycles', fontsize=11, title_fontsize=12, loc='upper left')
         ax.grid(axis='y', alpha=0.3, linestyle='--')
+
+        # Add explanatory text annotations on the right side
+        annotation_x = 0.76  # Position on the right side
+        annotation_y_start = 0.65
+        line_spacing = 0.13
+
+        # Potentiel explanation
+        fig.text(annotation_x, annotation_y_start,
+                'Potentiel : lister les\nstatuts=> Trésorerie\nincertain,\nprévoir 50% de pertes',
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='#FFE5CC', edgecolor='#F18F01', linewidth=2))
+
+        # Prévisionnel explanation
+        fig.text(annotation_x, annotation_y_start - line_spacing,
+                'Prévisionnel : attente de\nprise en\ncharge=> Trésorerie\nprévisonnel a court terme',
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='#F4D4E8', edgecolor='#A23B72', linewidth=2))
+
+        # Réél explanation
+        fig.text(annotation_x, annotation_y_start - 2 * line_spacing,
+                'Réél : lister les\ncatégories=> Trésorerie\ncertain à court terme',
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='#D4E8F4', edgecolor='#2E86AB', linewidth=2))
 
         # Format y-axis to show currency
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}€'))
