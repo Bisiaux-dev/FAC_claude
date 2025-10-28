@@ -39,11 +39,11 @@ jobs:
     - name: Generate PowerPoint report
       run: python generate_powerpoint.py
 
-    - name: Send email report with PowerPoint
-      run: python email_sender/send_report_with_ppt.py
-      env:
-        SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+    # - name: Send email report with PowerPoint
+    #   run: python email_sender/send_report_with_ppt.py
+    #   env:
+    #     SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+    #     SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
 
     - name: Upload downloaded file
       if: always()

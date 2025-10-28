@@ -1076,7 +1076,7 @@ def create_promo_visualization(dest_dir, graph_dir):
         import traceback
         traceback.print_exc()
 
-def create_relance_visualization(source_dir):
+def create_relance_visualization(dest_dir):
     """
     Create visualization for Initial relance 1 - Number of relances per person (initials)
     """
@@ -1084,13 +1084,13 @@ def create_relance_visualization(source_dir):
     import numpy as np
 
     try:
-        # Find the source CSV file
-        csv_files = glob.glob(os.path.join(source_dir, '*.csv'))
+        # Find the converted CSV file
+        csv_files = glob.glob(os.path.join(dest_dir, '*.csv'))
         if not csv_files:
-            print("⚠ Warning: No CSV files found in source directory. Skipping relance visualization.")
+            print("⚠ Warning: No CSV files found in destination directory. Skipping relance visualization.")
             return
 
-        # Read the first CSV file (should be NOUVEAU FAC PERSPECTIVIA.csv)
+        # Read the first CSV file (should be NOUVEAU FAC PERSPECTIVIA.csv converted)
         df = pd.read_csv(csv_files[0], encoding='utf_8_sig', sep=';')
 
         # Check if Initial relance 1 column exists
