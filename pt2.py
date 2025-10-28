@@ -1076,6 +1076,87 @@ def create_promo_visualization(dest_dir, graph_dir):
         import traceback
         traceback.print_exc()
 
+def create_relance_visualization(source_dir):
+    """
+    Create visualization for Initial relance 1 - Number of relances per person (initials)
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    try:
+        # Find the source CSV file
+        csv_files = glob.glob(os.path.join(source_dir, '*.csv'))
+        if not csv_files:
+            print("⚠ Warning: No CSV files found in source directory. Skipping relance visualization.")
+            return
+
+        # Read the first CSV file (should be NOUVEAU FAC PERSPECTIVIA.csv)
+        df = pd.read_csv(csv_files[0], encoding='utf_8_sig', sep=';')
+
+        # Check if Initial relance 1 column exists
+        if 'Initial relance 1' not in df.columns:
+            print("⚠ Warning: 'Initial relance 1' column not found. Skipping relance visualization.")
+            return
+
+        # Filter rows with Initial relance 1 filled
+        df_relance = df[df['Initial relance 1'].notna()].copy()
+
+        if df_relance.empty:
+            print("⚠ Warning: No data for Initial relance 1. Skipping visualization.")
+            return
+
+        # Count relances per person (initials)
+        relance_counts = df_relance['Initial relance 1'].value_counts().sort_values(ascending=True)
+
+        # Create the plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Create horizontal bar chart
+        y_pos = np.arange(len(relance_counts))
+
+        # Define colors (using a nice color palette)
+        colors = plt.cm.Set2(np.linspace(0, 1, len(relance_counts)))
+
+        bars = ax.barh(y_pos, relance_counts.values, color=colors)
+
+        # Add value labels on bars
+        for i, (bar, value) in enumerate(zip(bars, relance_counts.values)):
+            ax.text(value + 0.5, bar.get_y() + bar.get_height() / 2,
+                   f'{int(value)}',
+                   ha='left', va='center', fontsize=11, fontweight='bold')
+
+        # Customize the plot
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(relance_counts.index, fontsize=12)
+        ax.set_xlabel('Nombre de Relances', fontsize=13, fontweight='bold')
+        ax.set_ylabel('Initiales', fontsize=13, fontweight='bold')
+        ax.set_title('Nombre de Relances par Personne (Initial relance 1)',
+                    fontsize=15, fontweight='bold', pad=20)
+
+        # Add grid
+        ax.grid(axis='x', alpha=0.3, linestyle='--')
+
+        # Add total at the bottom
+        total_relances = relance_counts.sum()
+        fig.text(0.5, 0.01, f'Total: {int(total_relances)} relances',
+                ha='center', fontsize=11, fontweight='bold')
+
+        plt.tight_layout(rect=[0, 0.03, 1, 1])
+
+        # Save the figure
+        graph_dir = 'output/Graphiques'
+        os.makedirs(graph_dir, exist_ok=True)
+        output_path = os.path.join(graph_dir, 'Relances_par_Personne.png')
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
+
+        print(f"📊 Relance visualization created: {output_path}")
+
+    except Exception as e:
+        print(f"✗ Error creating relance visualization: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 # =============================================================================
 # MAIN EXECUTION
@@ -1106,6 +1187,7 @@ if __name__ == "__main__":
     create_ca_visualization_by_vague(destination_directory, graph_directory)
     create_intermediary_status_visualization(destination_directory, graph_directory)
     create_promo_visualization(destination_directory, graph_directory)
+    create_relance_visualization(destination_directory)
 
     # Step 5: Convert checklist CSV to XLSX
     print("\n[STEP 5] Converting checklist CSV to XLSX...")
