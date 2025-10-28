@@ -1149,7 +1149,7 @@ def create_relance_visualization(dest_dir):
         # Customize the plot
         ax.set_xlabel('Initiales', fontsize=13, fontweight='bold')
         ax.set_ylabel('Nombre de Relances', fontsize=13, fontweight='bold')
-        ax.set_title('Nombre de Relances par Personne (Toutes les relances)',
+        ax.set_title('Suivi des Relances par Collaborateur',
                     fontsize=15, fontweight='bold', pad=20)
         ax.set_xticks(x)
         ax.set_xticklabels(all_initials, fontsize=12)

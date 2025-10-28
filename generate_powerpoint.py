@@ -75,7 +75,7 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             'Statuts_Intermédiaires_Previsionnel.png': 'Statuts Intermédiaires - Prévisionnel',
             'Statuts_Intermédiaires_Potentiel.png': 'Statuts Intermédiaires - Potentiel',
             'PROMO_Reel_par_Vague.png': 'Répartition des Formations Réelles par PROMO',
-            'Relances_par_Personne.png': 'Nombre de Relances par Personne (Initial relance 1)'
+            'Relances_par_Personne.png': 'Suivi des Relances par Collaborateur'
         }
 
         # Sort graph files according to defined order
