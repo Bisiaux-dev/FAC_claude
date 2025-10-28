@@ -55,15 +55,15 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             print(f"⚠ WARNING: No PNG files found in {graph_dir}")
             return
 
-        # Define graph order and titles (order matters - Relances_par_Personne is last)
+        # Define graph order and titles (alphabetical order, Relances_par_Personne is last)
         graph_order = [
-            'Paiements_par_Vague.png',
-            'Statut_Formations_par_Vague.png',
             'CA_par_Catégorie_Toutes_Vagues.png',
-            'Statuts_Intermédiaires_Reel.png',
-            'Statuts_Intermédiaires_Previsionnel.png',
-            'Statuts_Intermédiaires_Potentiel.png',
+            'Paiements_par_Vague.png',
             'PROMO_Reel_par_Vague.png',
+            'Statut_Formations_par_Vague.png',
+            'Statuts_Intermédiaires_Potentiel.png',
+            'Statuts_Intermédiaires_Previsionnel.png',
+            'Statuts_Intermédiaires_Reel.png',
             'Relances_par_Personne.png'  # LAST SLIDE
         ]
 
