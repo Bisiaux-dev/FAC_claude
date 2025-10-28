@@ -49,20 +49,24 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
         subtitle.text = "Visualisations des Formations par Vague\nGénéré automatiquement"
 
         # Get all PNG files from the graph directory
-        graph_files = glob.glob(os.path.join(graph_dir, '*.png'))
+        all_graph_files = glob.glob(os.path.join(graph_dir, '*.png'))
 
-        if not graph_files:
+        if not all_graph_files:
             print(f"⚠ WARNING: No PNG files found in {graph_dir}")
             return
 
-        # Sort files for consistent ordering
-        graph_files.sort()
+        # Define graph order and titles (order matters - Relances_par_Personne is last)
+        graph_order = [
+            'Paiements_par_Vague.png',
+            'Statut_Formations_par_Vague.png',
+            'CA_par_Catégorie_Toutes_Vagues.png',
+            'Statuts_Intermédiaires_Reel.png',
+            'Statuts_Intermédiaires_Previsionnel.png',
+            'Statuts_Intermédiaires_Potentiel.png',
+            'PROMO_Reel_par_Vague.png',
+            'Relances_par_Personne.png'  # LAST SLIDE
+        ]
 
-        print(f"\n📊 Found {len(graph_files)} graphs to add to presentation:")
-        for graph_file in graph_files:
-            print(f"   - {os.path.basename(graph_file)}")
-
-        # Define graph order and titles
         graph_info = {
             'Paiements_par_Vague.png': 'Paiements Réels par Vague et Type de Paiement',
             'Statut_Formations_par_Vague.png': 'Répartition des Formations par Vague et État',
@@ -73,6 +77,19 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             'PROMO_Reel_par_Vague.png': 'Répartition des Formations Réelles par PROMO',
             'Relances_par_Personne.png': 'Nombre de Relances par Personne (Initial relance 1)'
         }
+
+        # Sort graph files according to defined order
+        graph_files = []
+        for graph_name in graph_order:
+            graph_path = os.path.join(graph_dir, graph_name)
+            if os.path.exists(graph_path):
+                graph_files.append(graph_path)
+            else:
+                print(f"⚠ WARNING: Expected graph not found: {graph_name}")
+
+        print(f"\n📊 Found {len(graph_files)} graphs to add to presentation:")
+        for graph_file in graph_files:
+            print(f"   - {os.path.basename(graph_file)}")
 
         # Add a slide for each graph
         for graph_file in graph_files:
