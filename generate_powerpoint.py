@@ -141,13 +141,13 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
 
                 # Add text annotations for CA graph
                 if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
-                    # Add three text boxes on the right side
+                    # Add three text boxes on the right side, aligned with bars
                     text_left = Inches(7.2)
                     text_width = Inches(2.5)
                     text_height = Inches(1.0)
 
-                    # Potentiel annotation
-                    txBox1 = slide.shapes.add_textbox(text_left, Inches(2.5), text_width, text_height)
+                    # Potentiel annotation (top - aligned with CA Potentiel bar)
+                    txBox1 = slide.shapes.add_textbox(text_left, Inches(1.5), text_width, text_height)
                     tf1 = txBox1.text_frame
                     tf1.text = "Potentiel : lister les statuts=> Trésorerie incertain, prévoir 50% de pertes"
                     tf1.word_wrap = True
@@ -160,8 +160,8 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                     txBox1.fill.solid()
                     txBox1.fill.fore_color.rgb = RGBColor(255, 255, 255)
 
-                    # Prévisionnel annotation
-                    txBox2 = slide.shapes.add_textbox(text_left, Inches(3.7), text_width, text_height)
+                    # Prévisionnel annotation (middle - aligned with CA Prévisionnel bar)
+                    txBox2 = slide.shapes.add_textbox(text_left, Inches(2.8), text_width, text_height)
                     tf2 = txBox2.text_frame
                     tf2.text = "Prévisionnel : attente de prise en charge=> Trésorerie prévisonnel a court terme"
                     tf2.word_wrap = True
@@ -174,8 +174,8 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                     txBox2.fill.solid()
                     txBox2.fill.fore_color.rgb = RGBColor(255, 255, 255)
 
-                    # Réél annotation
-                    txBox3 = slide.shapes.add_textbox(text_left, Inches(4.9), text_width, text_height)
+                    # Réél annotation (bottom - aligned with CA Réél bar)
+                    txBox3 = slide.shapes.add_textbox(text_left, Inches(4.1), text_width, text_height)
                     tf3 = txBox3.text_frame
                     tf3.text = "Réél : lister les catégories=> Trésorerie certain à court terme"
                     tf3.word_wrap = True
