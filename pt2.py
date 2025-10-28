@@ -1084,14 +1084,15 @@ def create_relance_visualization(dest_dir):
     import numpy as np
 
     try:
-        # Find the converted CSV file
-        csv_files = glob.glob(os.path.join(dest_dir, '*.csv'))
-        if not csv_files:
-            print("⚠ Warning: No CSV files found in destination directory. Skipping relance visualization.")
+        # Read the main CSV file with all columns (not the summary files)
+        main_csv_path = os.path.join(dest_dir, 'NOUVEAU FAC PERSPECTIVIA.csv')
+
+        if not os.path.exists(main_csv_path):
+            print(f"⚠ Warning: Main CSV file not found at {main_csv_path}. Skipping relance visualization.")
             return
 
-        # Read the first CSV file (should be NOUVEAU FAC PERSPECTIVIA.csv converted)
-        df = pd.read_csv(csv_files[0], encoding='utf_8_sig', sep=';')
+        # Read the main CSV file with all data
+        df = pd.read_csv(main_csv_path, encoding='utf_8_sig', sep=';')
 
         # Check if Initial relance 1 column exists
         if 'Initial relance 1' not in df.columns:
