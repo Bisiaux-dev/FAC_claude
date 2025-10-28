@@ -1078,7 +1078,7 @@ def create_promo_visualization(dest_dir, graph_dir):
 
 def create_relance_visualization(dest_dir):
     """
-    Create visualization for Initial relance 1 - Number of relances per person (initials)
+    Create visualization for all Initial relance columns (1 to 8) - Grouped vertical bars per person
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -1094,52 +1094,71 @@ def create_relance_visualization(dest_dir):
         # Read the main CSV file with all data
         df = pd.read_csv(main_csv_path, encoding='utf_8_sig', sep=';')
 
-        # Check if Initial relance 1 column exists
-        if 'Initial relance 1' not in df.columns:
-            print("⚠ Warning: 'Initial relance 1' column not found. Skipping relance visualization.")
+        # Collect data from all Initial relance columns (1 to 8)
+        relance_data = {}
+        relance_columns = []
+
+        for i in range(1, 9):
+            col_name = f'Initial relance {i}'
+            if col_name in df.columns and df[col_name].notna().sum() > 0:
+                relance_columns.append(col_name)
+                counts = df[col_name].value_counts().to_dict()
+                relance_data[col_name] = counts
+
+        if not relance_data:
+            print("⚠ Warning: No data found in any Initial relance columns. Skipping visualization.")
             return
 
-        # Filter rows with Initial relance 1 filled
-        df_relance = df[df['Initial relance 1'].notna()].copy()
+        # Get all unique initials across all relance columns
+        all_initials = set()
+        for counts in relance_data.values():
+            all_initials.update(counts.keys())
+        all_initials = sorted(all_initials)
 
-        if df_relance.empty:
-            print("⚠ Warning: No data for Initial relance 1. Skipping visualization.")
-            return
-
-        # Count relances per person (initials)
-        relance_counts = df_relance['Initial relance 1'].value_counts().sort_values(ascending=True)
+        # Create data matrix: rows = relance columns, columns = initials
+        data_matrix = []
+        for col_name in relance_columns:
+            row = [relance_data[col_name].get(initial, 0) for initial in all_initials]
+            data_matrix.append(row)
 
         # Create the plot
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(12, 7))
 
-        # Create horizontal bar chart
-        y_pos = np.arange(len(relance_counts))
+        # Set positions for grouped bars
+        x = np.arange(len(all_initials))
+        width = 0.12  # Width of each bar
+        offset_start = -(len(relance_columns) - 1) * width / 2
 
-        # Define colors (using a nice color palette)
-        colors = plt.cm.Set2(np.linspace(0, 1, len(relance_counts)))
+        # Define colors for each relance column
+        colors = plt.cm.Set3(np.linspace(0, 1, len(relance_columns)))
 
-        bars = ax.barh(y_pos, relance_counts.values, color=colors)
+        # Create grouped bars
+        for i, (col_name, row_data) in enumerate(zip(relance_columns, data_matrix)):
+            offset = offset_start + i * width
+            relance_num = col_name.split()[-1]  # Extract number from "Initial relance X"
+            bars = ax.bar(x + offset, row_data, width,
+                         label=f'Relance {relance_num}', color=colors[i])
 
-        # Add value labels on bars
-        for i, (bar, value) in enumerate(zip(bars, relance_counts.values)):
-            ax.text(value + 0.5, bar.get_y() + bar.get_height() / 2,
-                   f'{int(value)}',
-                   ha='left', va='center', fontsize=11, fontweight='bold')
+            # Add value labels on bars (only if value > 0)
+            for j, (bar, value) in enumerate(zip(bars, row_data)):
+                if value > 0:
+                    ax.text(bar.get_x() + bar.get_width() / 2., bar.get_height() + 0.5,
+                           f'{int(value)}',
+                           ha='center', va='bottom', fontsize=9, fontweight='bold')
 
         # Customize the plot
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(relance_counts.index, fontsize=12)
-        ax.set_xlabel('Nombre de Relances', fontsize=13, fontweight='bold')
-        ax.set_ylabel('Initiales', fontsize=13, fontweight='bold')
-        ax.set_title('Nombre de Relances par Personne (Initial relance 1)',
+        ax.set_xlabel('Initiales', fontsize=13, fontweight='bold')
+        ax.set_ylabel('Nombre de Relances', fontsize=13, fontweight='bold')
+        ax.set_title('Nombre de Relances par Personne (Toutes les relances)',
                     fontsize=15, fontweight='bold', pad=20)
+        ax.set_xticks(x)
+        ax.set_xticklabels(all_initials, fontsize=12)
+        ax.legend(title='Type de Relance', fontsize=10, title_fontsize=11, loc='upper right')
+        ax.grid(axis='y', alpha=0.3, linestyle='--')
 
-        # Add grid
-        ax.grid(axis='x', alpha=0.3, linestyle='--')
-
-        # Add total at the bottom
-        total_relances = relance_counts.sum()
-        fig.text(0.5, 0.01, f'Total: {int(total_relances)} relances',
+        # Calculate and add total at the bottom
+        total_relances = sum(sum(row) for row in data_matrix)
+        fig.text(0.5, 0.01, f'Total: {int(total_relances)} relances sur {len(relance_columns)} types',
                 ha='center', fontsize=11, fontweight='bold')
 
         plt.tight_layout(rect=[0, 0.03, 1, 1])
