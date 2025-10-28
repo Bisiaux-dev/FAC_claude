@@ -816,19 +816,19 @@ def create_ca_visualization_by_vague(dest_dir, graph_dir):
         fig.text(annotation_x, annotation_y_start,
                 'Potentiel : lister les\nstatuts=> Trésorerie\nincertain,\nprévoir 50% de pertes',
                 fontsize=10, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='#FFE5CC', edgecolor='#F18F01', linewidth=2))
+                bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Prévisionnel explanation
         fig.text(annotation_x, annotation_y_start - line_spacing,
                 'Prévisionnel : attente de\nprise en\ncharge=> Trésorerie\nprévisonnel a court terme',
                 fontsize=10, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='#F4D4E8', edgecolor='#A23B72', linewidth=2))
+                bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Réél explanation
         fig.text(annotation_x, annotation_y_start - 2 * line_spacing,
                 'Réél : lister les\ncatégories=> Trésorerie\ncertain à court terme',
                 fontsize=10, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='#D4E8F4', edgecolor='#2E86AB', linewidth=2))
+                bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
         # Format y-axis to show currency
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}€'))
