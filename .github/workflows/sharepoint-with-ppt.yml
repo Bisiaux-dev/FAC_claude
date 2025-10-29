@@ -2,7 +2,7 @@ name: SharePoint XLSX Automation (With PowerPoint)
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Tous les lundis à 8h UTC
+    - cron: '0 8 * * 1-5'  # Lundi à vendredi à 8h UTC (exclut samedi-dimanche)
   workflow_dispatch:  # Permet lancement manuel
 
 jobs:
