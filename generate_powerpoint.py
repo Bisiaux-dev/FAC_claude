@@ -136,11 +136,14 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Remonter le graphique de 15% (diminuer img_top)
                 img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
-            # Remonter légèrement le graphique CA pour laisser place aux annotations en bas
+            # Ajuster le graphique CA pour laisser place aux annotations en bas
             if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
-                # Pas de modification de taille (garde img_width = 9 inches)
-                # Remonter le graphique légèrement
-                img_top = Inches(1.0)  # Position verticale plus haute (était 1.2)
+                # Réduire la largeur de 10%
+                img_width = Inches(9 * 0.9)
+                # Centrer le graphique réduit horizontalement
+                img_left = Inches(0.5 + (9 * 0.1) / 2)
+                # Remonter le graphique légèrement plus haut
+                img_top = Inches(0.9)  # Position verticale encore plus haute (était 1.0)
 
             try:
                 if img_height:
