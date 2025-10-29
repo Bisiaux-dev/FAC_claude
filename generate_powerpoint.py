@@ -136,12 +136,11 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Remonter le graphique de 15% (diminuer img_top)
                 img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
-            # Réduire le graphique CA de 7,5% pour laisser place aux annotations en bas
+            # Remonter légèrement le graphique CA pour laisser place aux annotations en bas
             if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
-                img_width = Inches(9 * 0.925)  # Largeur réduite de 7,5%
-                # Ne pas spécifier img_height - PowerPoint calculera automatiquement pour garder les proportions
-                # Centrer le graphique réduit horizontalement
-                img_left = Inches(0.5 + (9 * 0.075) / 2)
+                # Pas de modification de taille (garde img_width = 9 inches)
+                # Remonter le graphique légèrement
+                img_top = Inches(1.0)  # Position verticale plus haute (était 1.2)
 
             try:
                 if img_height:
@@ -153,7 +152,7 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Add text annotations for CA graph - aligned horizontally at bottom
                 if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
                     # Three compact text boxes aligned horizontally at the very bottom
-                    text_y = Inches(6.5)  # Position verticale (tout en bas de la slide)
+                    text_y = Inches(6.7)  # Position verticale descendue légèrement (était 6.5)
                     text_width = Inches(2.4)  # Largeur compacte
                     text_height = Inches(0.4)  # Hauteur réduite
 
