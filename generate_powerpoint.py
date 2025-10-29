@@ -126,6 +126,7 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             img_left = Inches(0.5)
             img_top = Inches(1.2)
             img_width = Inches(9)
+            img_height = None  # Let PowerPoint calculate proportionally
 
             # Réduire de 10% la largeur et remonter de 15% la position verticale pour "Répartition des Formations par Vague et État"
             if graph_filename == 'Statut_Formations_par_Vague.png':
@@ -135,24 +136,31 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Remonter le graphique de 15% (diminuer img_top)
                 img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
+            # Réduire la hauteur du graphique CA pour laisser place aux annotations en bas
+            if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
+                img_height = Inches(4.5)  # Hauteur fixe réduite
+
             try:
-                pic = slide.shapes.add_picture(graph_file, img_left, img_top, width=img_width)
+                if img_height:
+                    pic = slide.shapes.add_picture(graph_file, img_left, img_top, width=img_width, height=img_height)
+                else:
+                    pic = slide.shapes.add_picture(graph_file, img_left, img_top, width=img_width)
                 print(f"   ✓ Added slide: {slide_title}")
 
                 # Add text annotations for CA graph - aligned horizontally at bottom
                 if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
-                    # Three text boxes aligned horizontally at the bottom
-                    text_y = Inches(5.8)  # Position verticale (en bas)
-                    text_width = Inches(2.8)
-                    text_height = Inches(0.9)
+                    # Three compact text boxes aligned horizontally at the very bottom
+                    text_y = Inches(6.4)  # Position verticale (tout en bas)
+                    text_width = Inches(2.4)  # Largeur réduite pour éviter chevauchement
+                    text_height = Inches(0.6)  # Hauteur réduite
 
                     # Réél annotation (left - under CA Réél bar)
-                    txBox1 = slide.shapes.add_textbox(Inches(0.8), text_y, text_width, text_height)
+                    txBox1 = slide.shapes.add_textbox(Inches(0.6), text_y, text_width, text_height)
                     tf1 = txBox1.text_frame
                     tf1.text = "Réél : lister les catégories=> Trésorerie certain à court terme"
                     tf1.word_wrap = True
                     p1 = tf1.paragraphs[0]
-                    p1.font.size = Pt(9)
+                    p1.font.size = Pt(8)
                     p1.font.name = 'Calibri'
                     # Add border
                     txBox1.line.color.rgb = RGBColor(0, 0, 0)
@@ -161,12 +169,12 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                     txBox1.fill.fore_color.rgb = RGBColor(255, 255, 255)
 
                     # Prévisionnel annotation (center - under CA Prévisionnel bar)
-                    txBox2 = slide.shapes.add_textbox(Inches(3.8), text_y, text_width, text_height)
+                    txBox2 = slide.shapes.add_textbox(Inches(3.5), text_y, text_width, text_height)
                     tf2 = txBox2.text_frame
                     tf2.text = "Prévisionnel : attente de prise en charge=> Trésorerie prévisonnel a court terme"
                     tf2.word_wrap = True
                     p2 = tf2.paragraphs[0]
-                    p2.font.size = Pt(9)
+                    p2.font.size = Pt(8)
                     p2.font.name = 'Calibri'
                     # Add border
                     txBox2.line.color.rgb = RGBColor(0, 0, 0)
@@ -175,12 +183,12 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                     txBox2.fill.fore_color.rgb = RGBColor(255, 255, 255)
 
                     # Potentiel annotation (right - under CA Potentiel bar)
-                    txBox3 = slide.shapes.add_textbox(Inches(6.8), text_y, text_width, text_height)
+                    txBox3 = slide.shapes.add_textbox(Inches(6.4), text_y, text_width, text_height)
                     tf3 = txBox3.text_frame
                     tf3.text = "Potentiel : lister les statuts=> Trésorerie incertain, prévoir 50% de pertes"
                     tf3.word_wrap = True
                     p3 = tf3.paragraphs[0]
-                    p3.font.size = Pt(9)
+                    p3.font.size = Pt(8)
                     p3.font.name = 'Calibri'
                     # Add border
                     txBox3.line.color.rgb = RGBColor(0, 0, 0)
