@@ -136,8 +136,12 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Remonter le graphique de 15% (diminuer img_top)
                 img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
-            # Pas de réduction pour le graphique CA (taille initiale)
-            # Les zones de texte seront positionnées en bas sans réduire le graphique
+            # Réduire le graphique CA de 7,5% pour laisser place aux annotations en bas
+            if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
+                img_width = Inches(9 * 0.925)  # Largeur réduite de 7,5%
+                img_height = Inches(4.5 * 0.925)  # Hauteur réduite de 7,5%
+                # Centrer le graphique réduit horizontalement
+                img_left = Inches(0.5 + (9 * 0.075) / 2)
 
             try:
                 if img_height:
@@ -149,7 +153,7 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Add text annotations for CA graph - aligned horizontally at bottom
                 if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
                     # Three compact text boxes aligned horizontally at the very bottom
-                    text_y = Inches(7.4)  # Position verticale (tout en bas de la slide)
+                    text_y = Inches(6.5)  # Position verticale (tout en bas de la slide)
                     text_width = Inches(2.4)  # Largeur compacte
                     text_height = Inches(0.4)  # Hauteur réduite
 
