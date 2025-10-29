@@ -136,9 +136,9 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Remonter le graphique de 15% (diminuer img_top)
                 img_top = Inches(1.2 * 0.85)  # Position verticale réduite de 15%
 
-            # Réduire la hauteur du graphique CA pour laisser place aux annotations en bas
+            # Réduire le graphique CA de 15% pour laisser place aux annotations en bas
             if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
-                img_height = Inches(4.5)  # Hauteur fixe réduite
+                img_height = Inches(4.5 * 0.85)  # Hauteur réduite de 15%
 
             try:
                 if img_height:
@@ -150,9 +150,9 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
                 # Add text annotations for CA graph - aligned horizontally at bottom
                 if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
                     # Three compact text boxes aligned horizontally at the very bottom
-                    text_y = Inches(6.4)  # Position verticale (tout en bas)
-                    text_width = Inches(2.4)  # Largeur réduite pour éviter chevauchement
-                    text_height = Inches(0.6)  # Hauteur réduite
+                    text_y = Inches(7.4)  # Position verticale (tout en bas de la slide)
+                    text_width = Inches(2.4)  # Largeur compacte
+                    text_height = Inches(0.4)  # Hauteur très réduite
 
                     # Réél annotation (left - under CA Réél bar)
                     txBox1 = slide.shapes.add_textbox(Inches(0.6), text_y, text_width, text_height)
