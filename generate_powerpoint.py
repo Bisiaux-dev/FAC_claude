@@ -139,7 +139,7 @@ def create_presentation_with_graphs(graph_dir, output_dir, output_file):
             # Réduire le graphique CA de 7,5% pour laisser place aux annotations en bas
             if graph_filename == 'CA_par_Catégorie_Toutes_Vagues.png':
                 img_width = Inches(9 * 0.925)  # Largeur réduite de 7,5%
-                img_height = Inches(4.5 * 0.925)  # Hauteur réduite de 7,5%
+                # Ne pas spécifier img_height - PowerPoint calculera automatiquement pour garder les proportions
                 # Centrer le graphique réduit horizontalement
                 img_left = Inches(0.5 + (9 * 0.075) / 2)
 
