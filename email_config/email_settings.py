@@ -39,6 +39,7 @@ RECIPIENTS_CONFIG = {
         'eric@perspectivia.fr',
         'anas@perspectivia.fr',
         'mohamed@perspectivia.fr',
+        'compta@planbgroupe.com',
     ],
     'cc_emails': [],
     'bcc_emails': [],
